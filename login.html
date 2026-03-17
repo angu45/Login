@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Craby Editor</title>
+    <link rel="stylesheet" href="style.css"> <style>
+        .login-container { max-width: 400px; margin: 100px auto; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-family: sans-serif; }
+        .form-group { margin-bottom: 15px; }
+        input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #eb4034; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #ccc; }
+        .error-msg { color: red; font-size: 14px; margin-bottom: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <h2>Craby Editor Login</h2>
+    <p id="errorBox" class="error-msg">Invalid credentials, please try again.</p>
+    
+    <form id="loginForm">
+        <div class="form-group">
+            <label>Username or Email</label>
+            <input type="text" id="identifier" placeholder="Enter username/email" required>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" id="loginBtn">Login to Workspace</button>
+    </form>
+    
+    <p style="text-align: center; margin-top: 15px;">
+        New here? <a href="signup.html">Create an account</a>
+    </p>
+</div>
+
+<script src="tag.js"></script> <script src="login.js"></script>
+</body>
+</html>
