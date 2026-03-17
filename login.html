@@ -1,41 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Craby Editor</title>
-    <link rel="stylesheet" href="style.css"> <style>
-        .login-container { max-width: 400px; margin: 100px auto; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-family: sans-serif; }
-        .form-group { margin-bottom: 15px; }
-        input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #eb4034; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:disabled { background: #ccc; }
-        .error-msg { color: red; font-size: 14px; margin-bottom: 10px; display: none; }
-    </style>
-</head>
-<body>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>Editor</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body><header><div class="logo-container">
+<img src="Logo.png" alt="Logo">
+</div><div class="header-actions"><button class="icon-btn" onclick="beautifyCode()">
+<i class="fas fa-magic"></i>
+</button><button class="icon-btn" onclick="exportCode()">
+<i class="fas fa-download"></i>
+</button><button id="run-btn" class="icon-btn run-btn" onclick="runCode()">
+<i class="fas fa-play"></i> RUN
+</button><button class="icon-btn" onclick="toggleSettings()">
+<i class="fas fa-sliders-h"></i>
+</button></div></header><div id="shutter-trigger" onclick="toggleShutter()">
+<i class="fas fa-chevron-right"></i>
+</div><main class="main-container">
+<div id="editor-grid" class="editor-grid"></div>
+</main><div id="shutter" class="shutter"><div class="shutter-header"><h3>TASKBAR</h3><i class="fas fa-times" onclick="toggleShutter()"></i>
 
-<div class="login-container">
-    <h2>Craby Editor Login</h2>
-    <p id="errorBox" class="error-msg">Invalid credentials, please try again.</p>
-    
-    <form id="loginForm">
-        <div class="form-group">
-            <label>Username or Email</label>
-            <input type="text" id="identifier" placeholder="Enter username/email" required>
-        </div>
-        <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="password" placeholder="••••••••" required>
-        </div>
-        <button type="submit" id="loginBtn">Login to Workspace</button>
-    </form>
-    
-    <p style="text-align: center; margin-top: 15px;">
-        New here? <a href="signup.html">Create an account</a>
-    </p>
-</div>
+</div><div class="shutter-list"><button class="add-btn" onclick="addNewFilePrompt()">
+<i class="fas fa-plus"></i> NEW FILE
+</button><div id="shutter-file-list"></div></div></div><div id="settingsPanel" class="settings-panel"><h3>IDE Settings</h3><button onclick="toggleSettings()">CLOSE</button>
 
-<script src="tag.js"></script> <script src="login.js"></script>
-</body>
+</div><div id="preview-overlay" class="preview-overlay"><div class="overlay-header"><div style="display:flex; gap:10px;"><button class="icon-btn" onclick="refreshPreview()">
+<i class="fas fa-sync-alt"></i>
+</button><button class="icon-btn" onclick="setPreviewSize('100%')">
+<i class="fas fa-desktop"></i>
+</button><button class="icon-btn" onclick="setPreviewSize('375px')">
+<i class="fas fa-mobile-alt"></i>
+</button><button onclick="closePreview()" class="icon-btn">
+CLOSE
+</button></div></div><div id="preview-body"><iframe id="output-frame"></iframe></div></div><script src="theme-settings.js"></script><script src="main-logic.js"></script><script src="script2.js"></script></body>
 </html>
