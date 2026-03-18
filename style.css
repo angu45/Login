@@ -275,35 +275,68 @@ textarea {
 
 .checkbox-group { display: flex; gap: 15px; }
 .checkbox-group label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+// 1. Preview Overlay Open karne (RUN Button sathi)
+function runCode() {
+    const outputFrame = document.getElementById('output-frame');
+    const overlay = document.getElementById('preview-overlay');
+    
+    // Samja tumche code editors 'htmlEditor', 'cssEditor' ya variables madhe ahet
+    // Tar te sarv ekatra karun iframe madhe takne:
+    const htmlCode = localStorage.getItem('html-code') || ""; // Tumchya editor logic nusar badla
+    const cssCode = localStorage.getItem('css-code') || "";
+    const jsCode = localStorage.getItem('js-code') || "";
 
-/* --- 7. PREVIEW OVERLAY --- */
-.preview-overlay {
-    position: fixed;
-    inset: 0;
-    background: #fff;
-    z-index: 9999;
-    display: none;
-    flex-direction: column;
+    const fullContent = `
+        <html>
+            <head>
+                <style>${cssCode}</style>
+            </head>
+            <body>
+                ${htmlCode}
+                <script>${jsCode}<\/script>
+            </body>
+        </html>
+    `;
+
+    outputFrame.srcdoc = fullContent;
+    overlay.style.display = 'block'; // Overlay dakhvne
 }
 
-.overlay-header {
-    height: 60px;
-    background: var(--bg-panel);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
-    border-bottom: 1px solid var(--border);
+// 2. Preview Overlay Close karne
+function closePreview() {
+    document.getElementById('preview-overlay').style.display = 'none';
 }
 
-#output-frame { flex: 1; border: none; width: 100%; background: white; }
+// 3. Sizing Function (Mobile/Desktop View sathi)
+function setPreviewSize(width) {
+    const frame = document.getElementById('output-frame');
+    const previewBody = document.getElementById('preview-body');
 
-/* Suggestion Box Fix */
-#suggestion-box {
-    position: absolute;
-    z-index: 5000;
-    background: #1c2128;
-    border: 1px solid var(--accent);
-    border-radius: 4px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    if (width === '375px') {
+        // Mobile View
+        frame.style.width = '375px';
+        frame.style.height = '667px';
+        frame.style.margin = '20px auto';
+        frame.style.border = '10px solid #333';
+        frame.style.borderRadius = '20px';
+    } else {
+        // Desktop View
+        frame.style.width = '100%';
+        frame.style.height = '100%';
+        frame.style.margin = '0';
+        frame.style.border = 'none';
+        frame.style.borderRadius = '0';
+    }
+}
+
+// 4. Refresh Function
+function refreshPreview() {
+    const frame = document.getElementById('output-frame');
+    // Iframe reload karnya sathi srcdoc punha set karne
+    const currentContent = frame.srcdoc;
+    frame.srcdoc = '';
+    setTimeout(() => {
+        frame.srcdoc = currentContent;
+    }, 50);
+    console.log("Preview Refreshed!");
 }
