@@ -1,5 +1,41 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<title>Editor</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body><header><div class="logo-container">
+<title>Editor</title><link rel="stylesheet" href="style.css"><style>
+
+.preview-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #1e1e1e;
+    z-index: 1000;
+    display: none; /* Default hidden */
+}
+
+.overlay-header {
+    background: #2d2d2d;
+    padding: 10px;
+    display: flex;
+    justify-content: flex-end;
+    border-bottom: 1px solid #3c3c3c;
+}
+
+#preview-body {
+    width: 100%;
+    height: calc(100vh - 60px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+}
+
+#output-frame {
+    background: white;
+    transition: all 0.3s ease;
+}
+
+
+</style><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body><header><div class="logo-container">
 <img src="Logo.png" alt="Logo">
 </div><div class="header-actions"><button class="icon-btn" onclick="beautifyCode()">
 <i class="fas fa-magic"></i>
@@ -27,5 +63,70 @@
 <i class="fas fa-mobile-alt"></i>
 </button><button onclick="closePreview()" class="icon-btn">
 CLOSE
-</button></div></div><div id="preview-body"><iframe id="output-frame"></iframe></div></div><script src="theme.js"></script><script src="logic.js"></script><script src="script2.js"></script></body>
+</button></div></div><div id="preview-body"><iframe id="output-frame"></iframe></div></div><script src="theme.js"></script><script src="logic.js"></script><script src="script2.js">// 1. Preview Overlay Open karne (RUN Button sathi)
+function runCode() {
+    const outputFrame = document.getElementById('output-frame');
+    const overlay = document.getElementById('preview-overlay');
+    
+    // Samja tumche code editors 'htmlEditor', 'cssEditor' ya variables madhe ahet
+    // Tar te sarv ekatra karun iframe madhe takne:
+    const htmlCode = localStorage.getItem('html-code') || ""; // Tumchya editor logic nusar badla
+    const cssCode = localStorage.getItem('css-code') || "";
+    const jsCode = localStorage.getItem('js-code') || "";
+
+    const fullContent = `
+        <html>
+            <head>
+                <style>${cssCode}</style>
+            </head>
+            <body>
+                ${htmlCode}
+                <script>${jsCode}<\/script>
+            </body>
+        </html>
+    `;
+
+    outputFrame.srcdoc = fullContent;
+    overlay.style.display = 'block'; // Overlay dakhvne
+}
+
+// 2. Preview Overlay Close karne
+function closePreview() {
+    document.getElementById('preview-overlay').style.display = 'none';
+}
+
+// 3. Sizing Function (Mobile/Desktop View sathi)
+function setPreviewSize(width) {
+    const frame = document.getElementById('output-frame');
+    const previewBody = document.getElementById('preview-body');
+
+    if (width === '375px') {
+        // Mobile View
+        frame.style.width = '375px';
+        frame.style.height = '667px';
+        frame.style.margin = '20px auto';
+        frame.style.border = '10px solid #333';
+        frame.style.borderRadius = '20px';
+    } else {
+        // Desktop View
+        frame.style.width = '100%';
+        frame.style.height = '100%';
+        frame.style.margin = '0';
+        frame.style.border = 'none';
+        frame.style.borderRadius = '0';
+    }
+}
+
+// 4. Refresh Function
+function refreshPreview() {
+    const frame = document.getElementById('output-frame');
+    // Iframe reload karnya sathi srcdoc punha set karne
+    const currentContent = frame.srcdoc;
+    frame.srcdoc = '';
+    setTimeout(() => {
+        frame.srcdoc = currentContent;
+    }, 50);
+    console.log("Preview Refreshed!");
+}
+</script></body>
 </html>
