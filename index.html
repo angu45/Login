@@ -231,6 +231,91 @@
             <p style="margin-top:15px; font-size:13px; text-align:center;">Have account? <a onclick="showLoginModal()" style="color:var(--accent); cursor:pointer;">Login</a></p>  
         </div>  
     </div>  
+<script>
+    const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbyD7cnT-WH73-oURWAWK2NYfAvOLZavYwaaJQ5tL7GyFo0sMeOCrclLtOBuBQ5tRrE/exec';
+
+    // --- फिक्स केलेले लॉगिन फंक्शन ---
+    async function handleLogin() {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        const btn = document.getElementById('login-submit-btn');
+        const errorDiv = document.getElementById('login-error');
+
+        if (!email || !password) {
+            alert("कृपया सर्व माहिती भरा.");
+            return;
+        }
+
+        btn.innerText = "Checking...";
+        errorDiv.style.display = "none";
+
+        // गुगल स्क्रिप्टला डेटा पाठवण्याचा सर्वात सुरक्षित मार्ग (GET Query Parameters)
+        const finalUrl = `${SHEETS_API_URL}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+
+        try {
+            const response = await fetch(finalUrl, {
+                method: 'GET',
+                mode: 'cors', // CORS चालू ठेवले आहे
+            });
+
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                localStorage.setItem('craby_user', JSON.stringify({ email: data.email }));
+                alert("लॉगिन यशस्वी!");
+                location.reload();
+            } else {
+                errorDiv.innerText = "ईमेल किंवा पासवर्ड चुकीचा आहे.";
+                errorDiv.style.display = "block";
+            }
+        } catch (e) {
+            console.error(e);
+            errorDiv.innerText = "सर्व्हरशी संपर्क होऊ शकला नाही. (CORS Error)";
+            errorDiv.style.display = "block";
+            // जर अजूनही एरर येत असेल, तर याचा अर्थ गुगल स्क्रिप्टमध्ये 'doGet' फंक्शन नाही.
+        } finally {
+            btn.innerText = "Login";
+        }
+    }
+
+    // --- फिक्स केलेले साईनअप फंक्शन ---
+    async function handleSignup() {
+        const email = document.getElementById('signup-email').value;
+        const password = document.getElementById('signup-password').value;
+        const confirm = document.getElementById('signup-confirm').value;
+        const errorDiv = document.getElementById('signup-error');
+        const btn = document.getElementById('signup-submit-btn');
+
+        if (password !== confirm) {
+            errorDiv.innerText = "पासवर्ड मॅच होत नाहीये.";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        btn.innerText = "Saving...";
+        const finalUrl = `${SHEETS_API_URL}?action=signup&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+
+        try {
+            const response = await fetch(finalUrl, { method: 'GET' });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                alert("अकाऊंट तयार झाले! आता लॉगिन करा.");
+                showLoginModal();
+            } else {
+                errorDiv.innerText = data.message || "साईनअप फेल झाले.";
+                errorDiv.style.display = "block";
+            }
+        } catch (e) {
+            errorDiv.innerText = "सर्व्हर एरर.";
+            errorDiv.style.display = "block";
+        } finally {
+            btn.innerText = "Create Account";
+        }
+    }
+    
+    // बाकीचे फंक्शन्स (toggle, runCode, etc.) आधीसारखेच ठेवा.
+</script>
 
     <script>  
         const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbyD7cnT-WH73-oURWAWK2NYfAvOLZavYwaaJQ5tL7GyFo0sMeOCrclLtOBuBQ5tRrE/exec';  
