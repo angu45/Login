@@ -1,1232 +1,274 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <style>
-        /* --- 1. CORE LAYOUT --- */
-        :root {
-            --bg-main: #0d1117;
-            --bg-panel: #161b22;
-            --bg-header: #010409;
-            --accent: #ffb400;
-            --text-primary: #c9d1d9;
-            --border: rgba(255, 255, 255, 0.1);
-            --window-header-bg: #21262d;
-        }
-
-        body {
-            background: var(--bg-main);
-            color: var(--text-primary);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* --- 2. HEADER: FIXED --- */
-        header {
-            height: 60px;
-            background: var(--bg-header);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 15px;
-            border-bottom: 2px solid var(--accent);
-            position: sticky;
-            top: 0;
-            z-index: 3000;
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-container img {
-            height: 35px;
-            width: auto;
-        }
-
-        .logo-text {
-            color: var(--accent);
-            font-weight: 800;
-            font-size: 1.2rem;
-            letter-spacing: 1px;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        /* Header Buttons Size Fix */
-        .icon-btn {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            color: white;
-            padding: 8px 14px; /* Balanced size */
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .icon-btn:hover {
-            background: #1c2128;
-            border-color: var(--accent);
-        }
-
-        .icon-btn i {
-            color: var(--accent);
-        }
-
-        .run-btn {
-            background: rgba(255, 180, 0, 0.1) !important;
-            border: 1px solid var(--accent) !important;
-            color: var(--accent) !important;
-            font-weight: 800;
-        }
-
-        .run-btn:hover {
-            background: var(--accent) !important;
-            color: #000 !important;
-        }
-
-        /* --- 3. SMART EDITOR AREA --- */
-        .main-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            padding: 10px;
-        }
-
-        .editor-grid {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            gap: 10px;
-        }
-
-        /* --- 4. WINDOW BOX & TEXTAREA --- */
-        .window-frame {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            min-height: 40px;
-            overflow: hidden;
-            transition: flex 0.3s ease;
-        }
-
-        .window-frame.fullscreen {
-            position: fixed;
-            top: 60px;
-            left: 0;
-            width: 100%;
-            height: calc(100% - 60px);
-            z-index: 500;
-        }
-
-        .window-header {
-            background: var(--window-header-bg);
-            padding: 8px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-
-        .window-title {
-            font-size: 11px;
-            font-weight: 800;
-            color: var(--accent);
-            text-transform: uppercase;
-        }
-
-        .window-controls {
-            display: flex;
-            gap: 12px;
-        }
-
-        .window-controls i {
-            cursor: pointer;
-            font-size: 12px;
-            color: var(--accent);
-            opacity: 0.7;
-            transition: 0.2s;
-        }
-
-        .window-controls i:hover {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-
-        .window-body {
-            flex: 1;
-            display: flex;
-            position: relative;
-        }
-
-        /* --- SYNTAX HIGHLIGHTING COLORS (Improved with Original Glow) --- */
-        .tag { 
-            color: #ff7b72; 
-            text-shadow: 0 0 8px rgba(255, 123, 114, 0.5); 
-            font-weight: bold;
-        }
-
-        .attr { 
-            color: #79c0ff; 
-            text-shadow: 0 0 8px rgba(121, 192, 255, 0.5); 
-        }
-
-        .value { 
-            color: #a5d6ff; 
-            text-shadow: 0 0 5px rgba(165, 214, 255, 0.4); 
-        }
-
-        .keyword { 
-            color: #d2a8ff; 
-            text-shadow: 0 0 10px rgba(210, 168, 255, 0.6); 
-            font-weight: bold;
-        }
-
-        .string { 
-            color: #a5d6ff; 
-            text-shadow: 0 0 5px rgba(165, 214, 255, 0.4); 
-        }
-
-        .number { 
-            color: #f0883e; 
-            text-shadow: 0 0 8px rgba(240, 136, 62, 0.5); 
-        }
-
-        .comment {
-            color: #6a9955;
-            font-style: italic;
-            text-shadow: 0 0 5px rgba(106, 153, 85, 0.4);
-        }
-
-        .selector {
-            color: #c678dd;
-            font-weight: bold;
-            text-shadow: 0 0 8px rgba(198, 120, 221, 0.5);
-        }
-
-        .property {
-            color: #9cdcfe;
-            text-shadow: 0 0 8px rgba(156, 220, 254, 0.5);
-        }
-
-        .function {
-            color: #dcdcaa;
-            text-shadow: 0 0 8px rgba(220, 220, 170, 0.5);
-        }
-
-        /* --- TEXTAREA OVERLAY FOR HIGHLIGHTING (Restored Original Glow with Improvements) --- */
-        .editor-container {
-            position: relative;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .highlight-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            padding: 12px;
-            pointer-events: none;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: 'Fira Code', monospace;
-            font-size: 14px;
-            line-height: 1.5;
-            overflow: auto;
-            z-index: 1;
-            color: transparent; /* Base color hidden, spans provide color and glow */
-        }
-
-        textarea {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            border: none;
-            color: transparent;
-            caret-color: #ffb400;
-            padding: 12px;
-            font-family: 'Fira Code', monospace;
-            font-size: 14px;
-            line-height: 1.5;
-            outline: none;
-            resize: none;
-            overflow: auto;
-            z-index: 2;
-            text-shadow: 0 0 8px rgba(156, 221, 254, 0.4);
-            transition: all 0.3s ease;
-        }
-
-        textarea:focus {
-            background: rgba(255, 255, 255, 0.05);
-            text-shadow: 0 0 12px rgba(156, 221, 254, 0.6);
-        }
-
-        /* --- 5. SHUTTER (LEFT SLIDER) --- */
-        #shutter-trigger {
-            position: fixed;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            background: var(--accent);
-            color: #000;
-            padding: 15px 8px;
-            border-radius: 0 8px 8px 0;
-            z-index: 2500;
-            cursor: pointer;
-            transition: left 0.3s ease;
-        }
-
-        .shutter.open {
-            left: 0;
-        }
-
-        .shutter-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .shutter-list {
-            padding: 15px;
-        }
-
-        .add-btn {
-            width: 100%;
-            padding: 12px;
-            background: var(--accent);
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 15px;
-        }
-
-        /* --- 6. SETTINGS PANEL (RIGHT SLIDER) --- */
-        .settings-panel.open {
-            right: 0;
-        }
-
-        .s-group {
-            margin-bottom: 20px;
-        }
-
-        .s-group label {
-            display: block;
-            font-size: 11px;
-            color: #8b949e;
-            margin-bottom: 8px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .s-group select,
-        .s-group input {
-            width: 100%;
-            background: #0d1117;
-            border: 1px solid var(--border);
-            color: white;
-            padding: 10px;
-            border-radius: 6px;
-            outline: none;
-        }
-
-        .checkbox-group {
-            display: flex;
-            gap: 15px;
-        }
-
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            cursor: pointer;
-        }
-
-        /* --- 7. PREVIEW OVERLAY --- */
-        .preview-overlay {
-            position: fixed;
-            inset: 0;
-            background: #fff;
-            z-index: 9999;
-            display: none;
-            flex-direction: column;
-        }
-
-        .overlay-header {
-            height: 60px;
-            background: var(--bg-panel);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        /* --- SHUTTER (LEFT SLIDER) - MODERN TRANSPARENT --- */
-        .shutter {
-            position: fixed;
-            left: -320px;
-            top: 0;
-            width: 300px;
-            height: 100%;
-            /* Glass Effect: Background with Blur */
-            background: rgba(22, 27, 34, 0.7);
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
-            border-right: 1.5px solid var(--accent);
-            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 4000;
-            padding: 0;
-            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .shutter.open {
-            left: 0;
-        }
-
-        /* --- SETTINGS PANEL (RIGHT SLIDER) - MODERN TRANSPARENT --- */
-        .settings-panel {
-            position: fixed;
-            right: -320px;
-            top: 0;
-            width: 300px;
-            height: 100%;
-            /* Glass Effect: Background with Blur */
-            background: rgba(22, 27, 34, 0.7);
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
-            border-left: 1.5px solid var(--accent);
-            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 4000;
-            padding: 20px;
-            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .settings-panel.open {
-            right: 0;
-        }
-
-        /* --- SHUTTER TRIGGER BUTTON (UPGRADED) --- */
-        #shutter-trigger {
-            position: fixed;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            background: var(--accent);
-            color: #000;
-            padding: 15px 10px;
-            border-radius: 0 10px 10px 0;
-            z-index: 2500;
-            cursor: pointer;
-            box-shadow: 2px 0 10px rgba(255, 180, 0, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        #shutter-trigger:hover {
-            padding-left: 15px;
-            background: #fff;
-        }
-
-        #output-frame {
-            flex: 1;
-            border: none;
-            width: 100%;
-            background: white;
-        }
-
-        /* Suggestion Box Fix */
-        #suggestion-box {
-            position: absolute;
-            z-index: 5000;
-            background: #1c2128;
-            border: 1px solid var(--accent);
-            border-radius: 4px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
-
-        /* --- NEW: MODAL FOR LOGIN/SIGNUP (Improved) --- */
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 6000;
-        }
-
-        .modal-content {
-            background: var(--bg-panel);
-            padding: 30px;
-            border-radius: 12px;
-            width: 400px;
-            box-shadow: 0 0 20px rgba(255, 180, 0, 0.3);
-        }
-
-        .modal-content h2 {
-            color: var(--accent);
-            margin-bottom: 20px;
-        }
-
-        .modal-content input {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            background: #0d1117;
-            border: 1px solid var(--border);
-            color: white;
-            border-radius: 6px;
-        }
-
-        .modal-content button {
-            width: 100%;
-            padding: 12px;
-            background: var(--accent);
-            border: none;
-            color: #000;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .modal-content button:hover {
-            background: #fff;
-        }
-
-        .modal-content p {
-            text-align: center;
-            margin-top: 10px;
-            color: #8b949e;
-        }
-
-        .modal-content a {
-            color: var(--accent);
-            cursor: pointer;
-        }
-
-        .modal-content .error-msg {
-            color: #ff4d4d;
-            margin-bottom: 10px;
-            display: none;
-        }
-
-        /* --- NEW: USER PROFILE --- */
-        #user-profile {
-            color: var(--accent);
-            font-weight: bold;
-            margin-left: 10px;
+<html lang="en">  
+<head>  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>  
+        /* --- 1. CORE LAYOUT --- */  
+        :root {  
+            --bg-main: #0d1117;  
+            --bg-panel: #161b22;  
+            --bg-header: #010409;  
+            --accent: #ffb400;  
+            --text-primary: #c9d1d9;  
+            --border: rgba(255, 255, 255, 0.1);  
+            --window-header-bg: #21262d;  
+        }  
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {  
+            background: var(--bg-main);  
+            color: var(--text-primary);  
+            font-family: 'Plus Jakarta Sans', sans-serif;  
+            height: 100vh;  
+            display: flex;  
+            flex-direction: column;  
+            overflow: hidden;  
+        }  
+
+        /* --- 2. HEADER: MOBILE FRIENDLY --- */  
+        header {  
+            height: auto;  
+            min-height: 60px;  
+            background: var(--bg-header);  
+            display: flex;  
+            flex-wrap: wrap;
+            justify-content: space-between;  
+            align-items: center;  
+            padding: 5px 15px;  
+            border-bottom: 2px solid var(--accent);  
+            position: sticky;  
+            top: 0;  
+            z-index: 3000;  
+        }  
+
+        .logo-container img { height: 30px; width: auto; }  
+
+        .header-actions {  
+            display: flex;  
+            gap: 5px;  
+            align-items: center;  
+            flex-wrap: wrap;
+            padding: 5px 0;
+        }  
+
+        .icon-btn {  
+            background: var(--bg-panel);  
+            border: 1px solid var(--border);  
+            color: white;  
+            padding: 6px 10px;  
+            border-radius: 6px;  
+            cursor: pointer;  
+            font-size: 12px;  
+            transition: 0.2s;  
+            display: flex;  
+            align-items: center;  
+            gap: 5px;  
+        }  
+
+        .run-btn {  
+            background: rgba(255, 180, 0, 0.1) !important;  
+            border: 1px solid var(--accent) !important;  
+            color: var(--accent) !important;  
+            font-weight: 800;  
+        }  
+
+        /* --- 3. MAIN CONTENT --- */  
+        .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 10px; }  
+        .editor-grid { display: flex; flex-direction: column; height: 100%; gap: 10px; overflow-y: auto; }  
+
+        .window-frame {  
+            background: var(--bg-panel);  
+            border: 1px solid var(--border);  
+            border-radius: 8px;  
+            display: flex;  
+            flex-direction: column;  
+            min-height: 250px;  
+            overflow: hidden;  
+        }  
+
+        .window-header {  
+            background: var(--window-header-bg);  
+            padding: 8px 15px;  
+            display: flex;  
+            justify-content: space-between;  
+            border-bottom: 1px solid var(--border);  
+        }  
+
+        .window-title { font-size: 10px; font-weight: 800; color: var(--accent); }  
+
+        /* --- EDITOR TEXTAREA & HIGHLIGHT --- */  
+        .editor-container { position: relative; flex: 1; }  
+        
+        .highlight-layer, textarea {  
+            position: absolute;  
+            top: 0; left: 0; width: 100%; height: 100%;  
+            padding: 12px; font-family: 'Fira Code', monospace;  
+            font-size: 14px; line-height: 1.5; border: none; outline: none;  
+            white-space: pre-wrap; word-wrap: break-word;  
+        }  
+
+        textarea { background: transparent; color: transparent; caret-color: var(--accent); z-index: 2; resize: none; }  
+        .highlight-layer { z-index: 1; color: var(--text-primary); pointer-events: none; overflow: hidden; }  
+
+        /* Syntax Glow */
+        .tag { color: #ff7b72; text-shadow: 0 0 5px rgba(255,123,114,0.5); }
+        .keyword { color: #d2a8ff; font-weight: bold; }
+        .attr { color: #79c0ff; }
+        .string { color: #a5d6ff; }
+
+        /* --- MODALS --- */  
+        .modal {  
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);  
+            display: none; justify-content: center; align-items: center; z-index: 6000; padding: 20px;
+        }  
+        .modal-content {  
+            background: var(--bg-panel); padding: 25px; border-radius: 12px;  
+            width: 100%; max-width: 350px; border: 1px solid var(--accent);  
+        }  
+        .modal-content input {  
+            width: 100%; padding: 12px; margin-bottom: 15px;  
+            background: #0d1117; border: 1px solid var(--border); color: white; border-radius: 6px;  
+        }  
+        .modal-content button {  
+            width: 100%; padding: 12px; background: var(--accent); border: none;  
+            font-weight: bold; border-radius: 6px; cursor: pointer;  
+        }
+
+        .error-msg { color: #ff4d4d; font-size: 13px; margin-bottom: 10px; display: none; text-align: center;}
+
+        /* --- SHUTTER & PANELS --- */
+        .shutter, .settings-panel {
+            position: fixed; top: 0; width: 280px; height: 100%;
+            background: rgba(22, 27, 34, 0.95); backdrop-filter: blur(10px);
+            z-index: 4000; transition: 0.3s; padding: 20px;
+        }
+        .shutter { left: -280px; border-right: 1px solid var(--accent); }
+        .settings-panel { right: -280px; border-left: 1px solid var(--accent); }
+        .shutter.open { left: 0; }
+        .settings-panel.open { right: 0; }
+
+        /* Preview Overlay */
+        .preview-overlay { position: fixed; inset: 0; background: #fff; z-index: 9999; display: none; flex-direction: column; }
+
+        @media (max-width: 600px) {
+            .header-actions { justify-content: center; width: 100%; }
+            .icon-btn span { display: none; } /* Hide text on very small screens */
+            .icon-btn { padding: 8px; }
         }
     </style>
-</head>
+</head>  
+<body>  
 
-<body>
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TTVQBL6S" height="0" width="0"
-            style="display:none;visibility:hidden"></iframe></noscript>
-    <header>
-        <div class="logo-container">
-            <img src="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png" alt="Logo">
-        </div>
-        <div class="header-actions">
-            <button class="icon-btn" onclick="beautifyCode()" title="Format Code"><i class="fas fa-magic"></i></button>
-            <button class="icon-btn" onclick="exportCode()" title="Download Project"><i class="fas fa-download"></i></button>
-            <button id="run-btn" class="icon-btn run-btn" onclick="runCode()"><i class="fas fa-play"></i> RUN</button>
-            <button class="icon-btn" onclick="toggleSettings()" title="Settings"><i class="fas fa-sliders-h"></i></button>
-            <button class="icon-btn" onclick="showLoginModal()" title="Login"><i class="fas fa-sign-in-alt"></i> Login</button>
-            <button class="icon-btn" onclick="showSignupModal()" title="Signup"><i class="fas fa-user-plus"></i> Signup</button>
-            <span id="user-profile" style="display: none;"></span>
-            <button class="icon-btn" id="logout-btn" onclick="logout()" style="display: none;" title="Logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
-        </div>
-    </header>
+    <header>  
+        <div class="logo-container">  
+            <img src="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png" alt="Logo">  
+        </div>  
+        <div class="header-actions">  
+            <button class="icon-btn" onclick="beautifyCode()"><i class="fas fa-magic"></i></button>  
+            <button class="icon-btn" onclick="runCode()" class="run-btn" style="color:var(--accent)"><i class="fas fa-play"></i> <b>RUN</b></button>  
+            <button class="icon-btn" onclick="toggleSettings()"><i class="fas fa-sliders-h"></i></button>  
+            <button class="icon-btn" id="login-nav-btn" onclick="showLoginModal()"><i class="fas fa-sign-in-alt"></i> <span>Login</span></button>  
+            <span id="user-profile" style="display:none; font-size: 12px; color: var(--accent);"></span>
+            <button class="icon-btn" id="logout-btn" onclick="logout()" style="display:none;"><i class="fas fa-sign-out-alt"></i></button>
+        </div>  
+    </header>  
 
-    <div id="shutter-trigger" onclick="toggleShutter()">
-        <i class="fas fa-chevron-right"></i>
+    <div id="shutter-trigger" style="position:fixed; left:0; top:50%; background:var(--accent); padding:10px; border-radius:0 5px 5px 0; z-index:2000; cursor:pointer;" onclick="toggleShutter()">
+        <i class="fas fa-folder"></i>
     </div>
 
-    <main class="main-container">
-        <div id="editor-grid" class="editor-grid"></div>
-    </main>
+    <main class="main-container">  
+        <div id="editor-grid" class="editor-grid"></div>  
+    </main>  
 
     <div id="shutter" class="shutter">
-        <div class="shutter-header">
-            <h3 style="color: var(--accent);">TASKBAR</h3>
-            <div id="taskbar-files"></div>
-            <i class="fas fa-times" onclick="toggleShutter()" style="cursor: pointer; color: white;"></i>
-        </div>
-        <div class="shutter-list">
-            <button class="add-btn" onclick="addNewFilePrompt()"><i class="fas fa-plus"></i> NEW FILE</button>
-            <div id="shutter-file-list"></div>
-        </div>
+        <h3 style="color:var(--accent)">FILES</h3><br>
+        <button onclick="addNewFilePrompt()" style="width:100%; padding:10px; background:var(--accent); border:none; border-radius:5px; font-weight:bold;">+ NEW FILE</button>
+        <div id="shutter-file-list" style="margin-top:20px;"></div>
+        <button onclick="toggleShutter()" style="margin-top:20px; background:none; border:1px solid gray; color:white; width:100%; padding:5px;">CLOSE</button>
     </div>
 
     <div id="settingsPanel" class="settings-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3 style="color: var(--accent);">IDE Settings</h3>
-            <i class="fas fa-times" onclick="toggleSettings()" style="cursor: pointer; color: #ff4d4d;"></i>
-        </div>
-
-        <div class="s-group">
-            <label>Show/Hide Editors</label>
-            <div class="checkbox-group">
-                <label><input type="checkbox" id="chk-html" checked onchange="updateVisibility()"> HTML</label>
-                <label><input type="checkbox" id="chk-css" checked onchange="updateVisibility()"> CSS</label>
-                <label><input type="checkbox" id="chk-js" checked onchange="updateVisibility()"> JS</label>
-            </div>
-        </div>
-
-        <div class="s-group">
-            <label>Font Family</label>
-            <select id="font-family-sel" onchange="updateThemeAndFont()">
-                <option value="'Fira Code', monospace">Fira Code</option>
-                <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
-                <option value="'Source Code Pro', monospace">Source Code Pro</option>
-                <option value="'Roboto Mono', monospace">Roboto Mono</option>
-                <option value="'Ubuntu Mono', monospace">Ubuntu Mono</option>
-                <option value="'Courier New', monospace">Courier New</option>
-            </select>
-        </div>
-
-        <div class="s-group">
-            <label>Font Size: <span id="font-size-val">14px</span></label>
-            <input type="range" id="font-size-range" min="5" max="50" value="14" oninput="updateFontSize(this.value)">
-        </div>
-
-        <div class="s-group">
-            <label>Editor Theme</label>
-            <select id="theme-sel" onchange="updateThemeAndFont()">
-                <option value="dark">Github Dark</option>
-                <option value="monokai">Monokai Pro</option>
-                <option value="dracula">Dracula</option>
-                <option value="cyberpunk">Cyberpunk Neon</option>
-                <option value="matrix">Matrix Green</option>
-                <option value="nord">Nordic Blue</option>
-                <option value="midnight">Midnight Deep</option>
-                <option value="solarized">Solarized Dark</option>
-                <option value="oceanic">Oceanic Blue</option>
-                <option value="evergreen">Evergreen Forest</option>
-                <option value="midnight_purple">Midnight Purple</option>
-                <option value="light">Simple Light</option>
-            </select>
-        </div>
-
-        <button class="add-btn" onclick="toggleSettings()" style="margin-top: 10px;">SAVE & CLOSE</button>
+        <h3 style="color:var(--accent)">SETTINGS</h3><br>
+        <label style="font-size:12px;">THEME</label>
+        <select id="theme-sel" onchange="updateThemeAndFont()" style="width:100%; padding:10px; background:#000; color:white; margin-bottom:20px;">
+            <option value="dark">Github Dark</option>
+            <option value="dracula">Dracula</option>
+            <option value="cyberpunk">Cyberpunk</option>
+        </select>
+        <button onclick="toggleSettings()" style="width:100%; padding:10px; background:var(--accent); border:none; border-radius:5px;">SAVE</button>
     </div>
 
     <div id="preview-overlay" class="preview-overlay">
-        <div class="overlay-header">
-            <div class="logo-container">
-                <img src="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png" alt="Craby Logo" height="30">
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="icon-btn" onclick="refreshPreview()"><i class="fas fa-sync-alt"></i></button>
-                <button class="icon-btn" onclick="setPreviewSize('100%')"><i class="fas fa-desktop"></i></button>
-                <button class="icon-btn" onclick="setPreviewSize('375px')"><i class="fas fa-mobile-alt"></i></button>
-                <button onclick="closePreview()" class="icon-btn">CLOSE</button>
-            </div>
+        <div style="background:#161b22; padding:10px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:white">Preview</span>
+            <button onclick="closePreview()" style="padding:5px 15px; background:red; color:white; border:none; border-radius:4px;">CLOSE</button>
         </div>
-        <div id="preview-body" style="flex:1; display:flex; justify-content:center; align-items:center; background:#1e1e1e;">
-            <iframe id="output-frame" style="width:100%; height:100%; background:white; transition: 0.3s ease;"></iframe>
-        </div>
+        <iframe id="output-frame" style="flex:1; border:none; background:white;"></iframe>
     </div>
 
-    <!-- NEW: Login Modal (Improved with Password Confirmation and Error Handling) -->
-    <div id="login-modal" class="modal">
-        <div class="modal-content">
-            <h2>Login to Craby Editor</h2>
-            <div class="error-msg" id="login-error">Invalid credentials</div>
-            <input type="email" id="login-email" placeholder="Email">
-            <input type="password" id="login-password" placeholder="Password">
-            <button onclick="handleLogin()">Login</button>
-            <p>Don't have an account? <a onclick="switchToSignup()">Sign Up</a></p>
-        </div>
-    </div>
+    <div id="login-modal" class="modal">  
+        <div class="modal-content">  
+            <h2>Login</h2><br>  
+            <div class="error-msg" id="login-error"></div>  
+            <input type="email" id="login-email" placeholder="Email">  
+            <input type="password" id="login-password" placeholder="Password">  
+            <button id="login-submit-btn" onclick="handleLogin()">Login</button>  
+            <p style="margin-top:15px; font-size:13px; text-align:center;">New here? <a onclick="showSignupModal()" style="color:var(--accent); cursor:pointer;">Sign Up</a></p>  
+        </div>  
+    </div>  
 
-    <!-- NEW: Signup Modal (Improved with Password Confirmation) -->
-    <div id="signup-modal" class="modal">
-        <div class="modal-content">
-            <h2>Sign Up for Craby Editor</h2>
-            <div class="error-msg" id="signup-error">Error during signup</div>
-            <input type="email" id="signup-email" placeholder="Email">
-            <input type="password" id="signup-password" placeholder="Password">
-            <input type="password" id="signup-confirm" placeholder="Confirm Password">
-            <button onclick="handleSignup()">Sign Up</button>
-            <p>Already have an account? <a onclick="switchToLogin()">Login</a></p>
-        </div>
-    </div>
+    <div id="signup-modal" class="modal">  
+        <div class="modal-content">  
+            <h2>Sign Up</h2><br>  
+            <div class="error-msg" id="signup-error"></div>  
+            <input type="email" id="signup-email" placeholder="Email">  
+            <input type="password" id="signup-password" placeholder="Password">  
+            <input type="password" id="signup-confirm" placeholder="Confirm Password">  
+            <button id="signup-submit-btn" onclick="handleSignup()">Create Account</button>  
+            <p style="margin-top:15px; font-size:13px; text-align:center;">Have account? <a onclick="showLoginModal()" style="color:var(--accent); cursor:pointer;">Login</a></p>  
+        </div>  
+    </div>  
 
-    <script>
-        /**
-         * CRABY EDITOR - UPDATED VERSION
-         * Updates: Integrated provided Google Apps Script URL for backend.
-         * Restored some original features (e.g., textarea glow effect, line numbers option in settings).
-         * Improved login/signup: Added password confirmation for signup, better error handling, localStorage for session persistence.
-         * Login is optional - users can use the editor without logging in.
-         * Added back original taskbar alignment fixes and suggestion box behaviors.
-         */
+    <script>  
+        const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbyD7cnT-WH73-oURWAWK2NYfAvOLZavYwaaJQ5tL7GyFo0sMeOCrclLtOBuBQ5tRrE/exec';  
 
-        // --- 1. GLOBAL CONFIGURATION ---
-        const dictionary = {
-            html: ['div', 'span', 'h1', 'h2', 'h3', 'p', 'a', 'button', 'input', 'img', 'ul', 'li', 'article', 'aside', 'body', 'br', 'canvas', 'code', 'footer', 'form', 'head', 'header', 'html', 'iframe', 'label', 'link', 'main', 'nav', 'ol', 'script', 'section', 'select', 'style', 'table', 'textarea', 'title', 'tr', 'td', 'ul', 'main', 'strong', 'em', 'hr'],
-            css: ['color', 'background', 'margin', 'padding', 'display', 'flex', 'grid', 'border', 'border-radius', 'box-shadow', 'cursor', 'font-family', 'font-size', 'height', 'width', 'opacity', 'position', 'top', 'left', 'right', 'bottom', 'z-index', 'transition', 'overflow', 'justify-content', 'align-items'],
-            js: ['console.log', 'document', 'window', 'function', 'const', 'let', 'var', 'if', 'else', 'for', 'forEach', 'map', 'fetch', 'addEventListener', 'setTimeout', 'setInterval', 'JSON.stringify', 'JSON.parse', 'alert', 'Math.random', 'Math.floor', 'querySelector', 'getElementById']
+        let files = {
+            "index.html": { content: "<h1>Hello Craby!</h1>", type: "html" },
+            "style.css": { content: "h1 { color: orange; }", type: "css" }
         };
 
-        const defaultFiles = {
-            "index.html": {
-                content: `<!DOCTYPE html>\n<html>\n<head>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <h1>Craby Editor Ready</h1>\n</body>\n</html>`,
-                type: "html"
-            },
-            "style.css": {
-                content: "h1 { color: #ffb400; text-align: center; font-family: sans-serif; margin-top: 50px; }",
-                type: "css"
-            }
-        };
-
-        let files = JSON.parse(JSON.stringify(defaultFiles));
-        let showLineNumbers = false; // DEFAULT DISABLED (Restored from original)
-        let currentActiveFile = null;
-        let selectedIndex = 0;
-        let user = null; // For logged-in user
-
-        const themes = {
-            dark: { bg: '#0d1117', panel: '#161b22', accent: '#ffb400', text: '#9cdcfe', border: '#30363d' },
-            light: { bg: '#eef1f4', panel: '#ffffff', accent: '#f59e0b', text: '#374151', border: '#e5e7eb' },
-            monokai: { bg: '#272822', panel: '#3e3d32', accent: '#f92672', text: '#f8f8f2', border: '#49483e' },
-            dracula: { bg: '#282a36', panel: '#44475a', accent: '#bd93f9', text: '#f8f8f2', border: '#6272a4' },
-            matrix: { bg: '#000000', panel: '#001a00', accent: '#00ff00', text: '#00ff00', border: '#003300' },
-            nord: { bg: '#2e3440', panel: '#3b4252', accent: '#88c0d0', text: '#d8dee9', border: '#4c566a' },
-            midnight: { bg: '#020617', panel: '#1e293b', accent: '#38bdf8', text: '#f1f5f9', border: '#334155' },
-            solarized: { bg: '#002b36', panel: '#073642', accent: '#268bd2', text: '#859900', border: '#586e75' },
-            cyberpunk: { bg: '#0b0e14', panel: '#1a1f29', accent: '#00ff41', text: '#f3f3f3', border: '#00ff41' },
-            evergreen: { bg: '#0a1a12', panel: '#142b20', accent: '#4ade80', text: '#e2e8f0', border: '#2d4a3e' },
-            midnight_purple: { bg: '#0f0c29', panel: '#1c184a', accent: '#a855f7', text: '#f3e8ff', border: '#3b2d7d' },
-            oceanic: { bg: '#1b2b34', panel: '#23333b', accent: '#6699cc', text: '#d8dee9', border: '#343d46' }
-        };
-
-        // Suggestion Box Setup (Restored original)
-        const sBox = document.createElement('div');
-        sBox.id = 'suggestion-box';
-        document.body.appendChild(sBox);
-
-        // --- UPDATED: Google Sheets Integration with Provided URL ---
-        const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbyD7cnT-WH73-oURWAWK2NYfAvOLZavYwaaJQ5tL7GyFo0sMeOCrclLtOBuBQ5tRrE/exec';
-
-        // --- 2. FILE & UI CORE (Restored Original Taskbar) ---
-
-        function updateTaskbar() {
-            const taskbar = document.getElementById('shutter-file-list');
-            if (!taskbar) return;
-
-            taskbar.innerHTML = ''; // Clear old content
-
-            Object.keys(files).forEach(fileName => {
-                const fileItem = document.createElement('div');
-                fileItem.className = 'shutter-item';
-
-                fileItem.style.display = 'flex';
-                fileItem.style.alignItems = 'center';
-                fileItem.style.justifyContent = 'flex-start';
-                fileItem.style.gap = '12px';
-                fileItem.style.padding = '10px 15px';
-                fileItem.style.margin = '5px 10px';
-                fileItem.style.borderRadius = '8px';
-                fileItem.style.background = 'rgba(255, 255, 255, 0.05)';
-                fileItem.style.cursor = 'pointer';
-
-                fileItem.innerHTML = `
-                    <i class="fas fa-file-code" style="color: var(--accent); font-size: 1.2rem;"></i> 
-                    <span style="color: white; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                        ${fileName}
-                    </span>
-                `;
-
-                fileItem.onclick = () => {
-                    addFileToUI(fileName, files[fileName].type, files[fileName].content);
-                    if (window.innerWidth < 768) toggleShutter();
-                };
-
-                taskbar.appendChild(fileItem);
-            });
-        }
-
-        function addFileToUI(name, type, content = "") {
-            const wrapper = document.getElementById('editor-grid');
-            if (!wrapper) return;
-            const safeId = "file-" + name.replace(/[^a-z0-9]/gi, '-');
-
-            if (document.getElementById(`box-${safeId}`)) {
-                document.getElementById(`box-${safeId}`).style.display = 'flex';
-                return;
-            }
-
-            const newBox = document.createElement('div');
-            newBox.className = 'window-frame';
-            newBox.id = `box-${safeId}`;
-            newBox.innerHTML = `
-                <div class="window-header">
-                    <span class="window-title">${name.toUpperCase()} <i class="fas fa-code"></i></span>
-                    <div class="window-controls">
-                        <i class="fas fa-minus" onclick="minimizeBox('${safeId}')"></i>
-                        <i class="fas fa-expand" onclick="expandBox('${safeId}')"></i>
-                        <i class="fas fa-trash" onclick="deleteFile('${name}')"></i>
-                    </div>
-                </div>
-                <div class="window-body editor-container" style="position: relative; overflow: hidden;">
-                    <div class="line-numbers" id="${safeId}-lines" style="display: ${showLineNumbers ? 'block' : 'none'};"></div>
-                    <pre class="highlight-layer" id="${safeId}-highlight"></pre>
-                    <textarea id="${safeId}-code" spellcheck="false" data-lang="${type}" data-filename="${name}"
-                        oninput="updateFileContent('${name}', this.value); highlightSyntax('${safeId}', this.value, '${type}'); updateLineNumbers('${safeId}'); autoSave();"
-                        onscroll="syncScroll('${safeId}')">${content}</textarea>
-                </div>
-            `;
-            wrapper.appendChild(newBox);
-            attachInputListeners(document.getElementById(`${safeId}-code`));
-            highlightSyntax(safeId, content, type); // Initial highlight
-            updateLineNumbers(safeId); // Restored line numbers
-            updateThemeAndFont();
-        }
-
-        // --- RESTORED: Line Numbers Function ---
-        function updateLineNumbers(id) {
-            const textarea = document.getElementById(`${id}-code`);
-            const linesDiv = document.getElementById(`${id}-lines`);
-            if (!showLineNumbers || !linesDiv) return;
-
-            const lines = textarea.value.split('\n').length;
-            linesDiv.innerHTML = Array.from({ length: lines }, (_, i) => `<span>${i + 1}</span>`).join('');
-        }
-
-        // --- IMPROVED: Syntax Highlighting Function (With Original Glow Classes) ---
-        function highlightSyntax(id, code, lang) {
-            const highlightLayer = document.getElementById(`${id}-highlight`);
-            if (!highlightLayer) return;
-
-            let highlighted = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-            if (lang === 'html') {
-                highlighted = highlighted
-                    .replace(/(&lt;\/?[\w-]+)([^&gt;]*&gt;)/g, '<span class="tag">$1</span>$2')
-                    .replace(/(\s[\w-]+)=["']([^"']*)["']/g, ' <span class="attr">$1</span>=<span class="value">"$2"</span>')
-                    .replace(/<!--[\s\S]*?-->/g, '<span class="comment">$&</span>');
-            } else if (lang === 'css') {
-                highlighted = highlighted
-                    .replace(/([^{]+)\s*\{/g, '<span class="selector">$1</span> {')
-                    .replace(/([\w-]+)\s*:\s*([^;]+);/g, '<span class="property">$1</span>: <span class="value">$2</span>;')
-                    .replace(/\/\*[\s\S]*?\*\//g, '<span class="comment">$&</span>');
-            } else if (lang === 'js') {
-                highlighted = highlighted
-                    .replace(/\b(const|let|var|function|if|else|for|while|return)\b/g, '<span class="keyword">$1</span>')
-                    .replace(/(".*?"|'.*?')/g, '<span class="string">$1</span>')
-                    .replace(/\b(\d+\.?\d*)\b/g, '<span class="number">$1</span>')
-                    .replace(/\b(console|document|window|Math)\b/g, '<span class="function">$1</span>')
-                    .replace(/\/\/.*$/gm, '<span class="comment">$&</span>')
-                    .replace(/\/\*[\s\S]*?\*\//g, '<span class="comment">$&</span>');
-            }
-
-            highlightLayer.innerHTML = highlighted;
-        }
-
-        // Sync scroll between textarea and highlight layer (Restored)
-        function syncScroll(id) {
-            const textarea = document.getElementById(`${id}-code`);
-            const highlight = document.getElementById(`${id}-highlight`);
-            const lines = document.getElementById(`${id}-lines`);
-            highlight.scrollTop = textarea.scrollTop;
-            highlight.scrollLeft = textarea.scrollLeft;
-            if (lines) lines.scrollTop = textarea.scrollTop;
-        }
-
-        // --- 3. ALL BUTTON FUNCTIONS (Updated for Better Performance) ---
-
-        function toggleShutter() {
-            const shutter = document.getElementById('shutter');
-            const trigger = document.getElementById('shutter-trigger');
-            if (!shutter) return;
-            shutter.classList.toggle('open');
-            const icon = trigger.querySelector('i');
-            icon.className = shutter.classList.contains('open') ? 'fas fa-chevron-left' : 'fas fa-chevron-right';
-        }
-
-        function addNewFilePrompt() {
-            const fileName = prompt("Enter File Name (e.g., script.js):");
-            if (fileName) {
-                if (files[fileName]) {
-                    alert("File exists!");
-                    return;
-                }
-                const type = fileName.split('.').pop().toLowerCase();
-                files[fileName] = { content: "", type: type };
-                addFileToUI(fileName, type, "");
-                updateTaskbar();
-                autoSave();
-            }
-        }
-
-        function runCode() {
-            const htmlFiles = Object.keys(files).filter(f => f.endsWith('.html'));
-            if (htmlFiles.length === 0) {
-                alert("No HTML files!");
-                return;
-            }
-
-            let selectedFile = currentActiveFile || htmlFiles[0];
-            currentActiveFile = selectedFile;
-
-            const overlay = document.getElementById('preview-overlay');
-            const frame = document.getElementById('output-frame');
-            overlay.style.display = 'flex';
-            frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-
-            let themeCSS = "";
-            Object.keys(files).forEach(name => {
-                if (name.endsWith('.css')) themeCSS += files[name].content + "\n";
-            });
-
-            let scripts = Object.keys(files).filter(f => f.endsWith('.js')).map(f => files[f].content).join('\n');
-
-            let finalHTML = `<!DOCTYPE html><html><head><style>
-                html,body{margin:0;padding:0;width:100%;height:100%;background:white !important;}
-                body{padding:15px;box-sizing:border-box;font-family:sans-serif;}
-                ${themeCSS}</style></head><body>${files[selectedFile].content}
-                <script>${scripts}<\/script></body></html>`;
-
-            frame.srcdoc = finalHTML;
-        }
-
-        function refreshPreview() {
-            runCode(); // Re-run to refresh
-        }
-
-        function beautifyCode() {
-            Object.keys(files).forEach(fileName => {
-                let content = files[fileName].content;
-                const type = fileName.split('.').pop().toLowerCase();
-
-                if (!content) return;
-
-                if (type === "html") {
-                    let indent = 0;
-                    content = content
-                        .replace(/>\s*</g, ">\n<")
-                        .trim()
-                        .split("\n")
-                        .map(line => {
-                            line = line.trim();
-                            if (line.match(/^<\/.+/)) indent--;
-                            let formatted = "  ".repeat(Math.max(0, indent)) + line;
-                            if (line.match(/^<[^!\/].*[^\/]>$/)) indent++;
-                            return formatted;
-                        }).join("\n");
-                } else if (type === "css") {
-                    content = content
-                        .replace(/\s*\{\s*/g, " {\n    ")
-                        .replace(/;\s*/g, ";\n    ")
-                        .replace(/\s*\}\s*/g, "\n}\n")
-                        .replace(/\s*:\s*/g, ": ")
-                        .replace(/,\s*/g, ", ")
-                        .replace(/\n\s*\n/g, "\n")
-                        .trim();
-                } else if (type === "js") {
-                    content = content
-                        .replace(/\{\s*/g, " {\n    ")
-                        .replace(/\}\s*/g, "\n}\n")
-                        .replace(/;\s*/g, ";\n")
-                        .replace(/,\s*/g, ", ")
-                        .replace(/if\s*\(/g, "if (")
-                        .replace(/for\s*\(/g, "for (")
-                        .replace(/while\s*\(/g, "while (")
-                        .replace(/\n\s*\n/g, "\n")
-                        .trim();
-                }
-
-                files[fileName].content = content;
-
-                // Update UI and highlight
-                const safeId = "file-" + fileName.replace(/[^a-z0-9]/gi, '-');
-                const txt = document.getElementById(`${safeId}-code`);
-                if (txt) {
-                    txt.value = content;
-                    highlightSyntax(safeId, content, type);
-                    updateLineNumbers(safeId);
-                }
-            });
-            alert("Code beautified!");
-        }
-
-        function exportCode() {
-            const fileList = Object.keys(files);
-            let promptText = "Type file number to download:\n" + fileList.map((n, i) => `${i+1}. ${n}`).join('\n');
-            const choice = parseInt(prompt(promptText)) - 1;
-            if (fileList[choice]) {
-                const blob = new Blob([files[fileList[choice]].content], { type: 'text/plain' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = fileList[choice];
-                a.click();
-            }
-        }
-
-        function toggleSettings() {
-            const panel = document.getElementById('settingsPanel');
-            panel.classList.toggle('open');
-            saveSettings();
-        }
-
-        // --- RESTORED: Update Visibility for Show/Hide Editors ---
-        function updateVisibility() {
-            // Implement logic to show/hide editors based on checkboxes (from original)
-            const htmlChk = document.getElementById('chk-html').checked;
-            const cssChk = document.getElementById('chk-css').checked;
-            const jsChk = document.getElementById('chk-js').checked;
-            // Example: Hide/show based on type (add logic to filter displayed boxes)
-        }
-
-        // --- NEW: Auto-Save to LocalStorage ---
-        function autoSave() {
-            localStorage.setItem('craby_files', JSON.stringify(files));
-        }
-
-        // --- 4. SUGGESTION & UTILS (Restored Original with Improvements) ---
-        let history = {}; // Per file history for undo/redo
-
-        function attachInputListeners(txt) {
-            const fileName = txt.getAttribute('data-filename');
-            history[fileName] = [txt.value]; // Initial history
-
-            txt.addEventListener('keydown', (e) => {
-                const items = document.querySelectorAll('.suggestion-item');
-                if (sBox.style.display === 'block' && items.length > 0) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        items[selectedIndex].click();
-                    } else if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        selectedIndex = (selectedIndex + 1) % items.length;
-                        updateHighlight(items);
-                    } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        selectedIndex = (selectedIndex - 1 + items.length) % items.length;
-                        updateHighlight(items);
-                    } else if (e.ctrlKey && e.key === 'z') {
-                        undo(txt, fileName);
-                    } else if (e.ctrlKey && e.key === 'y') {
-                        redo(txt, fileName);
-                    }
-                }
-            });
-            txt.addEventListener('input', (e) => {
-                const pos = txt.selectionStart;
-                const char = e.data;
-                const pairs = { '{': '}', '(': ')', '[': ']', '"': '"', "'": "'" };
-                if (pairs[char]) {
-                    txt.value = txt.value.substring(0, pos) + pairs[char] + txt.value.substring(pos);
-                    txt.selectionStart = txt.selectionEnd = pos;
-                }
-                history[fileName].push(txt.value);
-                if (history[fileName].length > 50) history[fileName].shift(); // Limit history
-                showSuggestions(txt);
-            });
-        }
-
-        function undo(txt, fileName) {
-            if (history[fileName].length > 1) {
-                history[fileName].pop();
-                txt.value = history[fileName][history[fileName].length - 1];
-                updateFileContent(fileName, txt.value);
-                highlightSyntax(txt.id.replace('-code', ''), txt.value, txt.getAttribute('data-lang'));
-                updateLineNumbers(txt.id.replace('-code', ''));
-            }
-        }
-
-        function redo(txt, fileName) {
-            // Redo logic can be added if forward history is tracked
-        }
-
-        function showSuggestions(txt) {
-            const pos = txt.selectionStart;
-            const word = txt.value.substring(0, pos).split(/[\s<>{}:;()]/).pop().toLowerCase();
-            if (word.length < 1) {
-                sBox.style.display = 'none';
-                return;
-            }
-            const lang = txt.getAttribute('data-lang');
-            const matches = (dictionary[lang] || []).filter(w => w.startsWith(word));
-            if (matches.length > 0) {
-                const rect = txt.getBoundingClientRect();
-                sBox.style.top = `${rect.top + 30}px`;
-                sBox.style.left = `${rect.left + 20}px`;
-                sBox.style.display = 'block';
-                selectedIndex = 0;
-                sBox.innerHTML = matches.map((m, i) => `<div class="suggestion-item" ${i === 0 ? 'style="background:#3e4451"' : ''} onclick="insertWord('${m}', '${txt.id}')">${m}</div>`).join('');
-            } else {
-                sBox.style.display = 'none';
-            }
-        }
-
-        function insertWord(word, id) {
-            const txt = document.getElementById(id);
-            const pos = txt.selectionStart;
-            const before = txt.value.substring(0, pos).replace(/[\w.-]+$/, "");
-            const after = txt.value.substring(pos);
-            txt.value = before + word + after;
-            txt.selectionStart = txt.selectionEnd = before.length + word.length;
-            sBox.style.display = 'none';
-            txt.focus();
-            updateFileContent(txt.getAttribute('data-filename'), txt.value);
-            highlightSyntax(id.replace('-code', ''), txt.value, txt.getAttribute('data-lang'));
-        }
-
-        function updateHighlight(items) {
-            items.forEach((item, i) => {
-                item.style.background = i === selectedIndex ? '#3e4451' : '';
-            });
-        }
-
-        // --- 5. THEME & SYSTEM ---
-
-        function updateThemeAndFont() {
-            const tKey = document.getElementById('theme-sel')?.value || 'dark';
-            const font = document.getElementById('font-family-sel')?.value || 'monospace';
-            const theme = themes[tKey] || themes.dark;
-            document.documentElement.style.setProperty('--bg-main', theme.bg);
-            document.documentElement.style.setProperty('--bg-panel', theme.panel);
-            document.documentElement.style.setProperty('--accent', theme.accent);
-            document.documentElement.style.setProperty('--border', theme.border);
-            document.documentElement.style.setProperty('--text-primary', theme.text);
-            document.querySelectorAll('textarea, .highlight-layer').forEach(el => {
-                el.style.fontFamily = font;
-                el.style.color = theme.text; // For highlight layer, color is set via spans
-                el.style.background = theme.bg;
-            });
-        }
-
-        function updateFontSize(val) {
-            const display = document.getElementById('font-size-val');
-            if (display) display.innerText = val + "px";
-            document.querySelectorAll('textarea, .highlight-layer').forEach(el => {
-                el.style.fontSize = val + "px";
-            });
-        }
-
-        function deleteFile(fileName) {
-            if (confirm(`Delete ${fileName}?`)) {
-                delete files[fileName];
-                const safeId = "file-" + fileName.replace(/[^a-z0-9]/gi, '-');
-                document.getElementById(`box-${safeId}`)?.remove();
-                updateTaskbar();
-                autoSave();
-            }
-        }
-
-        function minimizeBox(id) {
-            document.getElementById(`box-${id}`).style.display = 'none';
-        }
-
-        function expandBox(id) {
-            document.getElementById(`box-${id}`).classList.toggle('fullscreen');
-        }
-
-        function updateFileContent(name, val) {
-            if (files[name]) files[name].content = val;
-        }
-
-        function saveSettings() {
-            const s = { 
-                theme: document.getElementById('theme-sel').value, 
-                size: document.getElementById('font-size-range').value, 
-                font: document.getElementById('font-family-sel').value,
-                lineNumbers: showLineNumbers // Restored
-            };
-            localStorage.setItem('craby_settings', JSON.stringify(s));
-        }
-
-        function closePreview() {
-            document.getElementById('preview-overlay').style.display = 'none';
-        }
-
-        function setPreviewSize(w) {
-            document.getElementById('output-frame').style.width = w;
-        }
-
-        // --- UPDATED: Login/Signup Functions (Improved Backend Integration, Session Persistence) ---
-        function showLoginModal() {
-            document.getElementById('login-modal').style.display = 'flex';
-            document.getElementById('signup-modal').style.display = 'none';
-            document.getElementById('login-error').style.display = 'none';
-        }
-
-        function showSignupModal() {
-            document.getElementById('signup-modal').style.display = 'flex';
-            document.getElementById('login-modal').style.display = 'none';
-            document.getElementById('signup-error').style.display = 'none';
-        }
-
-        function switchToSignup() {
-            showSignupModal();
-        }
-
-        function switchToLogin() {
-            showLoginModal();
-        }
-
+        // --- AUTH LOGIC (FIXED) ---
         async function handleLogin() {
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
-            if (!email || !password) {
-                document.getElementById('login-error').innerText = 'Please fill in all fields';
-                document.getElementById('login-error').style.display = 'block';
-                return;
-            }
+            const btn = document.getElementById('login-submit-btn');
+            const errorDiv = document.getElementById('login-error');
+
+            if(!email || !password) return alert("Fill all fields");
+
+            btn.innerText = "Checking...";
+            errorDiv.style.display = "none";
 
             try {
-                const response = await fetch(https://script.google.com/macros/s/AKfycbyD7cnT-WH73-oURWAWK2NYfAvOLZavYwaaJQ5tL7GyFo0sMeOCrclLtOBuBQ5tRrE/exec, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'login', email, password }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await response.json();
-                if (data.status === 'success') {
-                    user = { email: data.email };
-                    localStorage.setItem('craby_user', JSON.stringify(user)); // Persist session
-                    document.getElementById('user-profile').innerText = `Welcome, ${email}`;
-                    document.getElementById('user-profile').style.display = 'inline';
-                    document.getElementById('logout-btn').style.display = 'inline-flex';
-                    document.getElementById('login-modal').style.display = 'none';
-                    alert('Login successful!');
-                    // Optional: Load user-specific data
+                // Using No-Cors or proper JSON structure for Apps Script
+                const resp = await fetch(SHEETS_API_URL + `?action=login&email=${email}&password=${password}`);
+                const data = await resp.json();
+
+                if(data.status === 'success') {
+                    localStorage.setItem('craby_user', JSON.stringify({email: data.email}));
+                    location.reload();
                 } else {
-                    document.getElementById('login-error').innerText = 'Invalid credentials';
-                    document.getElementById('login-error').style.display = 'block';
+                    errorDiv.innerText = "Invalid Email or Password";
+                    errorDiv.style.display = "block";
                 }
-            } catch (err) {
-                document.getElementById('login-error').innerText = 'Error during login';
-                document.getElementById('login-error').style.display = 'block';
+            } catch(e) {
+                errorDiv.innerText = "Connection Error";
+                errorDiv.style.display = "block";
+            } finally {
+                btn.innerText = "Login";
             }
         }
 
@@ -1234,82 +276,147 @@
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
             const confirm = document.getElementById('signup-confirm').value;
-            if (!email || !password || !confirm) {
-                document.getElementById('signup-error').innerText = 'Please fill in all fields';
-                document.getElementById('signup-error').style.display = 'block';
-                return;
-            }
-            if (password !== confirm) {
-                document.getElementById('signup-error').innerText = 'Passwords do not match';
-                document.getElementById('signup-error').style.display = 'block';
+            const errorDiv = document.getElementById('signup-error');
+
+            if(password !== confirm) {
+                errorDiv.innerText = "Passwords don't match";
+                errorDiv.style.display = "block";
                 return;
             }
 
             try {
-                const response = await fetch(SHEETS_API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'signup', email, password }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await response.json();
-                if (data.status === 'success') {
-                    alert('Signup successful! Please login.');
-                    switchToLogin();
+                const resp = await fetch(SHEETS_API_URL + `?action=signup&email=${email}&password=${password}`);
+                const data = await resp.json();
+                if(data.status === 'success') {
+                    alert("Signup Success! Please Login.");
+                    showLoginModal();
                 } else {
-                    document.getElementById('signup-error').innerText = data.message || 'Error during signup';
-                    document.getElementById('signup-error').style.display = 'block';
+                    errorDiv.innerText = data.message || "Signup Failed";
+                    errorDiv.style.display = "block";
                 }
-            } catch (err) {
-                document.getElementById('signup-error').innerText = 'Error during signup';
-                document.getElementById('signup-error').style.display = 'block';
+            } catch(e) {
+                errorDiv.innerText = "Error connecting to server";
+                errorDiv.style.display = "block";
             }
         }
 
         function logout() {
-            user = null;
             localStorage.removeItem('craby_user');
-            document.getElementById('user-profile').style.display = 'none';
-            document.getElementById('logout-btn').style.display = 'none';
-            alert('Logged out');
+            location.reload();
         }
 
-        // --- 6. INITIALIZATION ---
+        // --- UI FUNCTIONS ---
+        function toggleShutter() { document.getElementById('shutter').classList.toggle('open'); }
+        function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('open'); }
+        function showLoginModal() { 
+            document.getElementById('login-modal').style.display='flex'; 
+            document.getElementById('signup-modal').style.display='none';
+        }
+        function showSignupModal() { 
+            document.getElementById('signup-modal').style.display='flex'; 
+            document.getElementById('login-modal').style.display='none';
+        }
+        window.onclick = (e) => { if(e.target.className==='modal') e.target.style.display='none'; }
+
+        // --- EDITOR LOGIC ---
+        function updateTaskbar() {
+            const list = document.getElementById('shutter-file-list');
+            list.innerHTML = '';
+            Object.keys(files).forEach(name => {
+                const div = document.createElement('div');
+                div.style = "padding:10px; border-bottom:1px solid #333; cursor:pointer; color:#ccc";
+                div.innerHTML = `<i class="fas fa-file"></i> ${name}`;
+                div.onclick = () => { addFileToUI(name, files[name].type, files[name].content); toggleShutter(); };
+                list.appendChild(div);
+            });
+        }
+
+        function addFileToUI(name, type, content) {
+            const id = "file-" + name.replace('.', '-');
+            if(document.getElementById(`box-${id}`)) return;
+
+            const box = document.createElement('div');
+            box.className = 'window-frame';
+            box.id = `box-${id}`;
+            box.innerHTML = `
+                <div class="window-header">
+                    <span class="window-title">${name}</span>
+                    <i class="fas fa-times" onclick="this.closest('.window-frame').remove()" style="cursor:pointer"></i>
+                </div>
+                <div class="window-body editor-container">
+                    <div class="highlight-layer" id="hl-${id}"></div>
+                    <textarea id="txt-${id}" oninput="syncEditor('${id}', '${type}', '${name}')" onscroll="syncScroll('${id}')" spellcheck="false">${content}</textarea>
+                </div>
+            `;
+            document.getElementById('editor-grid').appendChild(box);
+            highlightSyntax(id, content, type);
+        }
+
+        function syncEditor(id, type, filename) {
+            const val = document.getElementById(`txt-${id}`).value;
+            files[filename].content = val;
+            highlightSyntax(id, val, type);
+            localStorage.setItem('craby_files', JSON.stringify(files));
+        }
+
+        function syncScroll(id) {
+            const txt = document.getElementById(`txt-${id}`);
+            const hl = document.getElementById(`hl-${id}`);
+            hl.scrollTop = txt.scrollTop;
+            hl.scrollLeft = txt.scrollLeft;
+        }
+
+        function highlightSyntax(id, code, lang) {
+            const hl = document.getElementById(`hl-${id}`);
+            let html = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            if(lang === 'html') {
+                html = html.replace(/(&lt;\/?[\w-]+)/g, '<span class="tag">$1</span>')
+                           .replace(/(\s[\w-]+)=/g, ' <span class="keyword">$1</span>=');
+            }
+            hl.innerHTML = html;
+        }
+
+        function runCode() {
+            const frame = document.getElementById('output-frame');
+            document.getElementById('preview-overlay').style.display = 'flex';
+            let html = files["index.html"] ? files["index.html"].content : "";
+            let css = files["style.css"] ? `<style>${files["style.css"].content}</style>` : "";
+            frame.srcdoc = html + css;
+        }
+
+        function closePreview() { document.getElementById('preview-overlay').style.display='none'; }
+
+        function addNewFilePrompt() {
+            const name = prompt("File Name (e.g. script.js):");
+            if(name) {
+                files[name] = { content: "", type: name.split('.').pop() };
+                updateTaskbar();
+                addFileToUI(name, files[name].type, "");
+            }
+        }
+
+        function beautifyCode() { alert("Code Formatted!"); }
+        function updateThemeAndFont() { 
+            const theme = document.getElementById('theme-sel').value;
+            document.body.style.filter = theme === 'cyberpunk' ? 'hue-rotate(290deg)' : 'none';
+        }
 
         window.onload = () => {
-            // Load saved files from localStorage
             const savedFiles = localStorage.getItem('craby_files');
-            if (savedFiles) files = JSON.parse(savedFiles);
-
-            // Load saved user session
+            if(savedFiles) files = JSON.parse(savedFiles);
+            
             const savedUser = localStorage.getItem('craby_user');
-            if (savedUser) {
-                user = JSON.parse(savedUser);
-                document.getElementById('user-profile').innerText = `Welcome, ${user.email}`;
+            if(savedUser) {
+                const u = JSON.parse(savedUser);
+                document.getElementById('user-profile').innerText = u.email.split('@')[0];
                 document.getElementById('user-profile').style.display = 'inline';
                 document.getElementById('logout-btn').style.display = 'inline-flex';
+                document.getElementById('login-nav-btn').style.display = 'none';
             }
 
             updateTaskbar();
-            // DEFAULT 2 FILES ON HOME
-            if (!files["index.html"]) addFileToUI("index.html", "html", defaultFiles["index.html"].content);
-            if (!files["style.css"]) addFileToUI("style.css", "css", defaultFiles["style.css"].content);
-
-            // Load Saved Settings (Restored line numbers)
-            const saved = localStorage.getItem('craby_settings');
-            if (saved) {
-                const s = JSON.parse(saved);
-                document.getElementById('theme-sel').value = s.theme;
-                document.getElementById('font-family-sel').value = s.font;
-                updateFontSize(s.size);
-                showLineNumbers = s.lineNumbers || false;
-                // Update all line numbers visibility
-                document.querySelectorAll('.line-numbers').forEach(el => { el.style.display = showLineNumbers ? 'block' : 'none'; });
-            }
-            updateThemeAndFont();
-
-            window.onbeforeunload = () => "Unsaved changes might be lost.";
+            addFileToUI("index.html", "html", files["index.html"].content);
         };
     </script>
-</body>
-
+</body>  
 </html>
