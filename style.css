@@ -1,13 +1,4 @@
-<!-- Favicon -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦀</text></svg>">
 
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-<style>
 /* ========================================
    CRABY EDITOR PRO - COMPREHENSIVE STYLES
    ======================================== */
@@ -615,74 +606,6 @@ body {
           0%, 100% { opacity: 0.4; }
           50% { opacity: 1; }
         }
-* 
-Updated HTML (remove this block from <body>):
-htmlDownloadCopy code<!-- Remove this entire block -->
-<!-- <div class="loader" id="loader">
-     ... (all loader content)
-   </div> -->
-In JavaScript, remove the simulateLoading function and its call in initializeApp. Replace:
-javascriptDownloadCopy codefunction initializeApp() {
-    // Original with loader
-    // simulateLoading(() => { ... });
-    
-    // Updated version without loader
-    document.getElementById('app').style.display = 'flex';  // Show app immediately
-    loadSavedData();
-    renderFileList();
-    renderFileTabs();
-    renderEditors();
-    loadSettings();
-    setupEventListeners();
-    if (AppState.settings.autoSave) {
-        setInterval(saveToLocalStorage, 5000);
-    }
-}
-
-
-2. Fix Font Color and Tag Attribute Issues
-In CSS, ensure syntax classes are properly defined and use the theme variables for consistency:
-
-* 
-Updated CSS (add or modify in <style>):
-cssDownloadCopy code.syntax-tag { color: var(--accent); text-shadow: 0 0 8px rgba(255, 180, 0, 0.5); }
-.syntax-attr { color: #79c0ff; text-shadow: 0 0 8px rgba(121, 192, 255, 0.5); }
-.syntax-value { color: #a5d6ff; text-shadow: 0 0 5px rgba(165, 214, 255, 0.4); }
-/* Ensure all syntax classes use var(--text-primary) as fallback */
-.syntax-comment { color: var(--text-muted); font-style: italic; }
-In JavaScript, fix highlightHTML to better handle attributes:
-javascriptDownloadCopy codefunction highlightHTML(code) {
-    let escaped = code
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-    
-    // Improved attribute handling
-    escaped = escaped.replace(/\s([\w-]+)(=)/g, ' <span class="syntax-attr">$1</span>$2');
-    escaped = escaped.replace(/(=)(&quot;|")([^&]*?)($2)/g, '$1<span class="syntax-value">$3</span>');
-    
-    // Rest remains similar
-    escaped = escaped.replace(/(&lt;\/?)([\w-]+)/g, '$1<span class="syntax-tag">$2</span>');
-    escaped = escaped.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="syntax-comment">$1</span>');
-    return escaped;
-}
-
-
-3. Add Button Icons and Logo
-
-* 
-Add a logo to the header (e.g., an SVG crab icon). Update the HTML header:
-htmlDownloadCopy code<div class="header-left">
-    <div class="logo">
-        <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="var(--accent)">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-            <!-- Simple crab shape; replace with a better SVG if needed -->
-        </svg>
-        <span class="logo-text">CRABY</span>
-        <span class="logo-sub">PRO</span>
-    </div>
-</div>
-
 cssDownloadCopy code@media (max-width: 768px) {
     .header { height: 50px; padding: 0 10px; }
     .btn { padding: 8px 12px; font-size: 12px; }
