@@ -1,354 +1,1489 @@
-/* --- 1. CORE LAYOUT --- */
-:root {
-    --bg-main: #0d1117;
-    --bg-panel: #161b22;
-    --bg-header: #010409;
-    --accent: #ffb400;
-    --text-primary: #c9d1d9;
-    --border: rgba(255, 255, 255, 0.1);
-    --window-header-bg: #21262d;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VS Code Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #252526;
+            --bg-tertiary: #2d2d30;
+            --text-primary: #d4d4d4;
+            --text-secondary: #858585;
+            --accent: #007acc;
+            --border: #3e3e42;
+            --sidebar-width: 250px;
+            --header-height: 35px;
+            --status-bar-height: 22px;
+            --activity-bar-width: 48px;
+        }
+
+        .theme-dark {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #252526;
+            --bg-tertiary: #2d2d30;
+            --text-primary: #d4d4d4;
+            --text-secondary: #858585;
+            --accent: #007acc;
+            --border: #3e3e42;
+        }
+
+        .theme-light {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f3f3;
+            --bg-tertiary: #e5e5e5;
+            --text-primary: #333333;
+            --text-secondary: #6e6e6e;
+            --accent: #0078d4;
+            --border: #e0e0e0;
+        }
+
+        .theme-blue {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --text-primary: #e6e6e6;
+            --text-secondary: #a0a0a0;
+            --accent: #4cc9f0;
+            --border: #2d4059;
+        }
+
+        .theme-green {
+            --bg-primary: #1e2a1e;
+            --bg-secondary: #1e3a1e;
+            --bg-tertiary: #1e4a1e;
+            --text-primary: #d4f0d4;
+            --text-secondary: #8a9a8a;
+            --accent: #4ade80;
+            --border: #3e5a3e;
+        }
+
+        .theme-purple {
+            --bg-primary: #2d1b4e;
+            --bg-secondary: #3d2b5e;
+            --bg-tertiary: #4d3b6e;
+            --text-primary: #e0d0f0;
+            --text-secondary: #a09ab0;
+            --accent: #a855f7;
+            --border: #5d4d7e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .header {
+            height: var(--header-height);
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            justify-content: space-between;
+        }
+
+        .title-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .close { background: #ff5f56; }
+        .minimize { background: #ffbd2e; }
+        .maximize { background: #27c93f; }
+
+        .activity-bar {
+            width: var(--activity-bar-width);
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 10px;
+        }
+
+        .activity-item {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .activity-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .activity-item.active {
+            background: var(--bg-tertiary);
+        }
+
+        .activity-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--accent);
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 10px 15px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+        }
+
+        .file-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 5px 0;
+        }
+
+        .file-item {
+            padding: 5px 15px 5px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .file-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .file-item.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 8px 15px;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            min-width: 120px;
+            max-width: 200px;
+            position: relative;
+        }
+
+        .tab:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .tab.active {
+            background: var(--bg-primary);
+            border-top: 1px solid var(--accent);
+        }
+
+        .tab-close {
+            margin-left: auto;
+            opacity: 0.6;
+            font-size: 14px;
+        }
+
+        .tab-close:hover {
+            opacity: 1;
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            position: relative;
+        }
+
+        .editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .textarea-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #editor {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: none;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+            tab-size: 4;
+        }
+
+        .line-numbers {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 50px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 20px 5px;
+            text-align: right;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 8px 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .status-bar {
+            height: var(--status-bar-height);
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 12px;
+            justify-content: space-between;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .settings-panel {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 300px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .settings-panel.active {
+            transform: translateX(0);
+        }
+
+        .settings-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .settings-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .setting-item {
+            margin-bottom: 20px;
+        }
+
+        .setting-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .setting-control {
+            width: 100%;
+        }
+
+        select, input[type="range"], input[type="color"] {
+            width: 100%;
+            padding: 5px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 3px;
+        }
+
+        input[type="range"] {
+            padding: 0;
+        }
+
+        .theme-preview {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .theme-option {
+            width: 30px;
+            height: 30px;
+            border: 2px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .theme-option:hover {
+            border-color: var(--accent);
+        }
+
+        .theme-option.active {
+            border-color: var(--accent);
+        }
+
+        .preview-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 999;
+            display: none;
+            flex-direction: column;
+        }
+
+        .preview-header {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-frame {
+            flex: 1;
+            border: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .shortcut {
+            color: var(--text-secondary);
+            font-size: 11px;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                left: 0;
+                top: var(--header-height);
+                bottom: var(--status-bar-height);
+                transform: translateX(-100%);
+                z-index: 100;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .settings-panel {
+                width: 250px;
+            }
+        }
+    </style>
+</head>
+<body class="theme-dark">
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="title-bar">
+                <span style="font-size: 12px; color: var(--text-secondary);">●</span>
+                <span style="font-size: 13px;">VS Code Editor - Project</span>
+            </div>
+            <div class="window-controls">
+                <div class="window-btn close"></div>
+                <div class="window-btn minimize"></div>
+                <div class="window-btn maximize"></div>
+            </div>
+        </div>
+
+        <!-- Activity Bar -->
+        <div class="activity-bar">
+            <div class="activity-item active" data-view="explorer" title="Explorer">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/>
+                </svg>
+            </div>
+            <div class="activity-item" data-view="search" title="Search">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+            </div>
+            <div class="activity-item" data-view="git" title="Source Control">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+            </div>
+            <div class="activity-item" data-view="debug" title="Debug">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 8h-2.81c-.45-.78-1.07-1.45-1.82-1.96l1.43-1.43c.39-.39.39-1.02 0-1.41l-.71-.71c-.39-.39-1.02-.39-1.41 0l-1.43 1.43c-.51-.75-1.18-1.36-1.96-1.82V4h-2v1.19c-.78.45-1.45 1.07-1.96 1.82l-1.43-1.43c-.39-.39-1.02-.39-1.41 0l-.71.71c-.39.39-.39 1.02 0 1.41l1.43 1.43c-.75.51-1.36 1.18-1.82 1.96H6v2h1.19c.45.78 1.07 1.45 1.82 1.96l-1.43 1.43c-.39.39-.39 1.02 0 1.41l.71.71c.39.39 1.02.39 1.41 0l1.43-1.43c.51.75 1.18 1.36 1.96 1.82V20h2v-1.19c.78-.45 1.45-1.07 1.96-1.82l1.43 1.43c.39.39 1.02.39 1.41 0l.71-.71c.39-.39.39-1.02 0-1.41l-1.43-1.43c.75-.51 1.36-1.18 1.82-1.96H18v-2h2V8zm-10 6c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
+                </svg>
+            </div>
+            <div class="activity-item" data-view="extensions" title="Extensions">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                </svg>
+            </div>
+            <div style="flex: 1;"></div>
+            <div class="activity-item" data-view="settings" title="Settings">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.04.64.09.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">Explorer</div>
+            <div class="file-tree" id="fileTree">
+                <div class="file-item active" data-file="index.html">
+                    <span>📄</span>
+                    <span>index.html</span>
+                </div>
+                <div class="file-item" data-file="style.css">
+                    <span>🎨</span>
+                    <span>style.css</span>
+                </div>
+                <div class="file-item" data-file="script.js">
+                    <span>⚡</span>
+                    <span>script.js</span>
+                </div>
+                <div class="file-item" data-file="README.md">
+                    <span>📝</span>
+                    <span>README.md</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Tabs -->
+            <div class="tabs" id="tabs">
+                <div class="tab active" data-file="index.html">
+                    <span>index.html</span>
+                    <span class="tab-close">×</span>
+                </div>
+            </div>
+
+            <!-- Editor -->
+            <div class="editor-container">
+                <div class="editor">
+                    <div class="textarea-container">
+                        <div class="line-numbers" id="lineNumbers">1</div>
+                        <textarea id="editor" spellcheck="false" placeholder="Start coding..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Settings Panel -->
+                <div class="settings-panel" id="settingsPanel">
+                    <div class="settings-header">
+                        <h3>Settings</h3>
+                        <button class="btn" onclick="toggleSettings()">✕</button>
+                    </div>
+                    <div class="settings-content">
+                        <div class="setting-item">
+                            <label class="setting-label">Theme</label>
+                            <div class="theme-preview">
+                                <div class="theme-option active" data-theme="dark" style="background: #1e1e1e;"></div>
+                                <div class="theme-option" data-theme="light" style="background: #ffffff; border: 1px solid #ccc;"></div>
+                                <div class="theme-option" data-theme="blue" style="background: #1a1a2e;"></div>
+                                <div class="theme-option" data-theme="green" style="background: #1e2a1e;"></div>
+                                <div class="theme-option" data-theme="purple" style="background: #2d1b4e;"></div>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Font Size: <span id="fontSizeValue">14</span>px</label>
+                            <input type="range" class="setting-control" id="fontSize" min="10" max="24" value="14">
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Font Family</label>
+                            <select class="setting-control" id="fontFamily">
+                                <option value="'Consolas', 'Monaco', 'Courier New', monospace">Consolas</option>
+                                <option value="'Fira Code', 'Consolas', monospace">Fira Code</option>
+                                <option value="'JetBrains Mono', 'Consolas', monospace">JetBrains Mono</option>
+                                <option value="'Source Code Pro', 'Consolas', monospace">Source Code Pro</option>
+                                <option value="'Menlo', 'Consolas', monospace">Menlo</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Tab Size: <span id="tabSizeValue">4</span></label>
+                            <input type="range" class="setting-control" id="tabSize" min="2" max="8" value="4">
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Word Wrap</label>
+                            <select class="setting-control" id="wordWrap">
+                                <option value="off">Off</option>
+                                <option value="on">On</option>
+                                <option value="word">Word</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Auto Save</label>
+                            <select class="setting-control" id="autoSave">
+                                <option value="off">Off</option>
+                                <option value="afterDelay">After Delay</option>
+                                <option value="onFocusChange">On Focus Change</option>
+                                <option value="onWindowChange">On Window Change</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Minimap</label>
+                            <select class="setting-control" id="minimap">
+                                <option value="on">On</option>
+                                <option value="off">Off</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Line Numbers</label>
+                            <select class="setting-control" id="lineNumbers">
+                                <option value="on">On</option>
+                                <option value="off">Off</option>
+                                <option value="relative">Relative</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Container -->
+                <div class="preview-container" id="previewContainer">
+                    <div class="preview-header">
+                        <span>Preview</span>
+                        <button class="btn" onclick="closePreview()">✕</button>
+                    </div>
+                    <iframe class="preview-frame" id="previewFrame"></iframe>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <button class="btn" onclick="runCode()" title="Run Code (Ctrl+Enter)">
+                    <span>▶</span>
+                    <span>Run</span>
+                </button>
+                <button class="btn" onclick="previewCode()" title="Preview (Ctrl+P)">
+                    <span>👁</span>
+                    <span>Preview</span>
+                </button>
+                <button class="btn" onclick="formatCode()" title="Format (Shift+Alt+F)">
+                    <span>✨</span>
+                    <span>Format</span>
+                </button>
+                <button class="btn" onclick="toggleSettings()" title="Settings">
+                    <span>⚙</span>
+                    <span>Settings</span>
+                </button>
+                <button class="btn" onclick="saveFile()" title="Save (Ctrl+S)">
+                    <span>💾</span>
+                    <span>Save</span>
+                </button>
+                <button class="btn" onclick="newFile()" title="New File (Ctrl+N)">
+                    <span>📄</span>
+                    <span>New</span>
+                </button>
+                <div style="flex: 1;"></div>
+                <button class="btn" onclick="toggleAutoComplete()" title="Toggle Auto Complete (Ctrl+Space)">
+                    <span>🔤</span>
+                    <span>Autocomplete</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-item">
+                <span id="cursorPosition">Ln 1, Col 1</span>
+                <span>|</span>
+                <span id="languageMode">HTML</span>
+                <span>|</span>
+                <span id="encoding">UTF-8</span>
+            </div>
+            <div class="status-item">
+                <span id="fileSize">0 KB</span>
+                <span>|</span>
+                <span id="saveStatus">Saved</span>
+                <span id="autoSaveIndicator" class="hidden">● Auto Save</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // File contents
+        const fileContents = {
+            'index.html': `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Web Page</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Hello, World!</h1>
+        <p>Welcome to my web page.</p>
+        <button onclick="handleClick()">Click Me!</button>
+    </div>
+    <script src="script.js"><\/script>
+</body>
+</html>`,
+            'style.css': `* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
 body {
-    background: var(--bg-main);
-    color: var(--text-primary);
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    height: 100vh;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
     display: flex;
-    flex-direction: column;
-    overflow: hidden; 
-}
-
-/* --- 2. HEADER: FIXED --- */
-header {
-    height: 60px;
-    background: var(--bg-header);
-    display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    padding: 0 15px;
-    border-bottom: 2px solid var(--accent);
-    position: sticky; 
-    top: 0;
-    z-index: 3000; 
 }
 
-logo-container { display: flex; align-items: center; gap: 10px; }
-.logo-container img { height: 35px; width: auto; }
-.logo-text { color: var(--accent); font-weight: 800; font-size: 1.2rem; letter-spacing: 1px; }
+.container {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    text-align: center;
+}
 
-.header-actions { display: flex; gap: 10px; align-items: center; }
+h1 {
+    color: #333;
+    margin-bottom: 1rem;
+}
 
-/* Header Buttons Size Fix */
-.icon-btn {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
+button {
+    background: #667eea;
     color: white;
-    padding: 8px 14px; /* Balanced size */
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.icon-btn:hover { background: #1c2128; border-color: var(--accent); }
-.icon-btn i { color: var(--accent); }
-
-.run-btn {
-    background: rgba(255, 180, 0, 0.1) !important;
-    border: 1px solid var(--accent) !important;
-    color: var(--accent) !important;
-    font-weight: 800;
-}
-
-.run-btn:hover { background: var(--accent) !important; color: #000 !important; }
-
-/* --- 3. SMART EDITOR AREA --- */
-.main-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; 
-    padding: 10px;
-}
-
-.editor-grid {
-    display: flex;
-    flex-direction: column;
-    height: 100%; 
-    gap: 10px;
-}
-
-/* --- 4. WINDOW BOX & TEXTAREA --- */
-.window-frame {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    flex: 1; 
-    min-height: 40px; 
-    overflow: hidden;
-    transition: flex 0.3s ease;
-}
-
-.window-frame.fullscreen {
-    position: fixed;
-    top: 60px;
-    left: 0;
-    width: 100%;
-    height: calc(100% - 60px);
-    z-index: 500;
-}
-
-.window-header {
-    background: var(--window-header-bg);
-    padding: 8px 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-}
-
-.window-title { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
-
-.window-controls { display: flex; gap: 12px; }
-.window-controls i { cursor: pointer; font-size: 12px; color: var(--accent); opacity: 0.7; transition: 0.2s; }
-.window-controls i:hover { opacity: 1; transform: scale(1.1); }
-
-.window-body { flex: 1; display: flex; }
-
-/* --- SYNTAX GLOW COLORS --- */
-
-.tag { 
-    color: #ff7b72; 
-    text-shadow: 0 0 8px rgba(255, 123, 114, 0.5); 
-    font-weight: bold;
-}
-
-.attr { 
-    color: #79c0ff; 
-    text-shadow: 0 0 8px rgba(121, 192, 255, 0.5); 
-}
-
-.keyword { 
-    color: #d2a8ff; 
-    text-shadow: 0 0 10px rgba(210, 168, 255, 0.6); 
-    font-weight: bold;
-}
-
-.string { 
-    color: #a5d6ff; 
-    text-shadow: 0 0 5px rgba(165, 214, 255, 0.4); 
-}
-
-.number { 
-    color: #f0883e; 
-    text-shadow: 0 0 8px rgba(240, 136, 62, 0.5); 
-}
-
-/* --- TEXTAREA OVERLAY FOR GLOW --- */
-.highlight-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    padding: 12px; /* textarea च्या padding शी मॅच करा */
-    pointer-events: none; /* क्लिक textarea वर व्हावे म्हणून */
-    white-space: pre;
-    font-family: 'Fira Code', monospace;
-    font-size: 14px;
-    line-height: 1.5;
-    overflow: hidden;
-    z-index: 1;
-}
-
-.input-layer {
-    position: relative;
-    z-index: 2;
-    color: transparent !important; /* ओरिजिनल टेक्स्ट लपवण्यासाठी */
-    caret-color: #ffb400; /* फक्त कर्सर दिसेल */
-    background: transparent !important;
-}
-textarea {
-    flex: 1;
-    width: 100%;
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
     border: none;
-    color: #9cdcfe;
-    padding: 12px;
-    font-family: 'Fira Code', monospace;
-    font-size: 14px;
-    line-height: 1.5;
-    outline: none;
-    resize: none;
-    white-space: pre;
-    overflow: auto;
-    text-shadow: 0 0 8px rgba(156, 221, 254, 0.4);
-    transition: all 0.3s ease;
-}
-
-textarea:focus {
-    background: rgba(255, 255, 255, 0.05);
-    text-shadow: 0 0 12px rgba(156, 221, 254, 0.6);
-}
-
-/* --- 5. SHUTTER (LEFT SLIDER) --- */
-#shutter-trigger {
-    position: fixed;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    background: var(--accent);
-    color: #000;
-    padding: 15px 8px;
-    border-radius: 0 8px 8px 0;
-    z-index: 2500; 
+    padding: 10px 20px;
+    border-radius: 5px;
     cursor: pointer;
-    transition: left 0.3s ease;
+    font-size: 16px;
+    transition: background 0.3s;
 }
 
-.shutter.open { left: 0; }
+button:hover {
+    background: #764ba2;
+}`,
+            'script.js': `// Welcome to the script file
+console.log('Hello from script.js!');
 
-.shutter-header {
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center;
-    padding: 15px; 
-    border-bottom: 1px solid var(--border);
+function handleClick() {
+    alert('Button clicked!');
+    console.log('Button was clicked!');
 }
 
-.shutter-list { padding: 15px; }
+// Add some interactivity
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM is ready!');
+    
+    // Add smooth scrolling
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+});
 
-.add-btn {
-    width: 100%; 
-    padding: 12px; 
-    background: var(--accent); 
-    border: none; 
-    border-radius: 6px; 
-    font-weight: bold; 
-    cursor: pointer;
-    margin-bottom: 15px;
+// Utility functions
+function formatDate(date) {
+    return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    }).format(date);
 }
 
-/* --- 6. SETTINGS PANEL (RIGHT SLIDER) --- */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}`,
+            'README.md': `# My Project
 
-.settings-panel.open { right: 0; }
+This is a simple web project created with VS Code Editor.
 
-.s-group { margin-bottom: 20px; }
-.s-group label { display: block; font-size: 11px; color: #8b949e; margin-bottom: 8px; font-weight: bold; text-transform: uppercase; }
-.s-group select, .s-group input {
-    width: 100%;
-    background: #0d1117;
-    border: 1px solid var(--border);
-    color: white;
-    padding: 10px;
-    border-radius: 6px;
-    outline: none;
-}
-.checkbox-group { display: flex; gap: 15px; }
-.checkbox-group label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+## Features
 
-/* --- 7. PREVIEW OVERLAY --- */
-.preview-overlay {
-    position: fixed;
-    inset: 0;
-    background: #fff;
-    z-index: 9999;
-    display: none;
-    flex-direction: column;
-}
+- HTML, CSS, and JavaScript support
+- Live preview
+- Auto-save functionality
+- Multiple themes
+- Customizable settings
 
-.overlay-header {
-    height: 60px;
-    background: var(--bg-panel);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
-    border-bottom: 1px solid var(--border);
-}
-/* --- SHUTTER (LEFT SLIDER) - MODERN TRANSPARENT --- */
-.shutter {
-    position: fixed;
-    left: -320px;
-    top: 0;
-    width: 300px;
-    height: 100%;
-    /* Glass Effect: Background with Blur */
-    background: rgba(22, 27, 34, 0.7); 
-    backdrop-filter: blur(2px); 
-    -webkit-backdrop-filter: blur(2px);
-    border-right: 1.5px solid var(--accent);
-    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 4000; 
-    padding: 0;
-    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
-}
+## How to Use
 
-.shutter.open { 
-    left: 0; 
-}
+1. Write your code in the editor
+2. Click "Run" to execute
+3. Click "Preview" to see the result
+4. Adjust settings as needed
 
-/* --- SETTINGS PANEL (RIGHT SLIDER) - MODERN TRANSPARENT --- */
-.settings-panel {
-    position: fixed;
-    right: -320px;
-    top: 0;
-    width: 300px;
-    height: 100%;
-    /* Glass Effect: Background with Blur */
-    background: rgba(22, 27, 34, 0.7); 
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-    border-left: 1.5px solid var(--accent);
-    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 4000; 
-    padding: 20px;
-    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-}
+## Keyboard Shortcuts
 
-.settings-panel.open { 
-    right: 0; 
-}
+- \`Ctrl+S\` - Save
+- \`Ctrl+Enter\` - Run
+- \`Ctrl+P\` - Preview
+- \`Ctrl+Space\` - Autocomplete
+- \`Shift+Alt+F\` - Format`
+        };
 
-/* --- SHUTTER TRIGGER BUTTON (UPGRADED) --- */
-#shutter-trigger {
-    position: fixed;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    background: var(--accent);
-    color: #000;
-    padding: 15px 10px;
-    border-radius: 0 10px 10px 0;
-    z-index: 2500; 
-    cursor: pointer;
-    box-shadow: 2px 0 10px rgba(255, 180, 0, 0.3);
-    transition: all 0.3s ease;
-}
+        // Current state
+        let currentFile = 'index.html';
+        let openFiles = ['index.html'];
+        let autoCompleteEnabled = true;
+        let autoSaveEnabled = false;
+        let autoSaveTimer = null;
 
-#shutter-trigger:hover {
-    padding-left: 15px;
-    background: #fff;
-}
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFile(currentFile);
+            updateLineNumbers();
+            setupEventListeners();
+            setupSettings();
+            updateStatusBar();
+            setupAutoSave();
+        });
 
-#output-frame { flex: 1; border: none; width: 100%; background: white; }
+        // Setup event listeners
+        function setupEventListeners() {
+            const editor = document.getElementById('editor');
+            
+            // Tab key support
+            editor.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    const tabSize = parseInt(document.getElementById('tabSize').value);
+                    const tab = ' '.repeat(tabSize);
+                    
+                    this.value = this.value.substring(0, start) + tab + this.value.substring(end);
+                    this.selectionStart = this.selectionEnd = start + tab.length;
+                    updateLineNumbers();
+                }
+                
+                // Auto complete
+                if (autoCompleteEnabled && e.key === ' ' && e.ctrlKey) {
+                    e.preventDefault();
+                    showAutoComplete();
+                }
+            });
 
-/* Suggestion Box Fix */
-#suggestion-box {
-    position: absolute;
-    z-index: 5000;
-    background: #1c2128;
-    border: 1px solid var(--accent);
-    border-radius: 4px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
+            // Update line numbers and status
+            editor.addEventListener('input', function() {
+                updateLineNumbers();
+                updateStatusBar();
+                if (autoSaveEnabled) {
+                    scheduleAutoSave();
+                }
+            });
+
+            editor.addEventListener('click', updateStatusBar);
+            editor.addEventListener('keyup', updateStatusBar);
+
+            // File tree
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const fileName = this.dataset.file;
+                    if (!openFiles.includes(fileName)) {
+                        openFile(fileName);
+                    }
+                    switchToFile(fileName);
+                });
+            });
+
+            // Tabs
+            document.getElementById('tabs').addEventListener('click', function(e) {
+                const tab = e.target.closest('.tab');
+                if (!tab) return;
+                
+                if (e.target.classList.contains('tab-close')) {
+                    closeTab(tab.dataset.file);
+                } else {
+                    switchToFile(tab.dataset.file);
+                }
+            });
+
+            // Activity bar
+            document.querySelectorAll('.activity-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.activity-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const view = this.dataset.view;
+                    if (view === 'settings') {
+                        toggleSettings();
+                    }
+                });
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 's':
+                            e.preventDefault();
+                            saveFile();
+                            break;
+                        case 'Enter':
+                            e.preventDefault();
+                            runCode();
+                            break;
+                        case 'p':
+                            e.preventDefault();
+                            previewCode();
+                            break;
+                        case 'n':
+                            e.preventDefault();
+                            newFile();
+                            break;
+                    }
+                }
+                if (e.shiftKey && e.altKey && e.key === 'F') {
+                    e.preventDefault();
+                    formatCode();
+                }
+            });
+
+            // Theme selection
+            document.querySelectorAll('.theme-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
+                    this.classList.add('active');
+                    applyTheme(this.dataset.theme);
+                });
+            });
+        }
+
+        // Setup settings
+        function setupSettings() {
+            // Font size
+            const fontSizeSlider = document.getElementById('fontSize');
+            const fontSizeValue = document.getElementById('fontSizeValue');
+            fontSizeSlider.addEventListener('input', function() {
+                fontSizeValue.textContent = this.value;
+                document.getElementById('editor').style.fontSize = this.value + 'px';
+                updateLineNumbers();
+            });
+
+            // Font family
+            document.getElementById('fontFamily').addEventListener('change', function() {
+                document.getElementById('editor').style.fontFamily = this.value;
+            });
+
+            // Tab size
+            const tabSizeSlider = document.getElementById('tabSize');
+            const tabSizeValue = document.getElementById('tabSizeValue');
+            tabSizeSlider.addEventListener('input', function() {
+                tabSizeValue.textContent = this.value;
+            });
+
+            // Auto save
+            document.getElementById('autoSave').addEventListener('change', function() {
+                autoSaveEnabled = this.value !== 'off';
+                updateStatusBar();
+                if (autoSaveEnabled) {
+                    scheduleAutoSave();
+                }
+            });
+        }
+
+        // Load file
+        function loadFile(fileName) {
+            const content = fileContents[fileName] || '';
+            document.getElementById('editor').value = content;
+            updateLineNumbers();
+            updateStatusBar();
+        }
+
+        // Open file
+        function openFile(fileName) {
+            if (!openFiles.includes(fileName)) {
+                openFiles.push(fileName);
+                addTab(fileName);
+            }
+        }
+
+        // Add tab
+        function addTab(fileName) {
+            const tabs = document.getElementById('tabs');
+            const tab = document.createElement('div');
+            tab.className = 'tab';
+            tab.dataset.file = fileName;
+            
+            const fileIcon = getFileIcon(fileName);
+            tab.innerHTML = `
+                <span>${fileIcon} ${fileName}</span>
+                <span class="tab-close">×</span>
+            `;
+            
+            tabs.appendChild(tab);
+        }
+
+        // Get file icon
+        function getFileIcon(fileName) {
+            if (fileName.endsWith('.html')) return '📄';
+            if (fileName.endsWith('.css')) return '🎨';
+            if (fileName.endsWith('.js')) return '⚡';
+            if (fileName.endsWith('.md')) return '📝';
+            return '📄';
+        }
+
+        // Switch to file
+        function switchToFile(fileName) {
+            currentFile = fileName;
+            
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.file === fileName);
+            });
+            
+            // Update file tree
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.file === fileName);
+            });
+            
+            // Load content
+            loadFile(fileName);
+        }
+
+        // Close tab
+        function closeTab(fileName) {
+            const index = openFiles.indexOf(fileName);
+            if (index > -1) {
+                openFiles.splice(index, 1);
+                
+                // Remove tab
+                const tab = document.querySelector(`.tab[data-file="${fileName}"]`);
+                if (tab) tab.remove();
+                
+                // Switch to another file if closing current
+                if (currentFile === fileName && openFiles.length > 0) {
+                    switchToFile(openFiles[0]);
+                }
+            }
+        }
+
+        // Update line numbers
+        function updateLineNumbers() {
+            const editor = document.getElementById('editor');
+            const lineNumbers = document.getElementById('lineNumbers');
+            const lines = editor.value.split('\n').length;
+            
+            let numbers = '';
+            for (let i = 1; i <= lines; i++) {
+                numbers += i + '\n';
+            }
+            
+            lineNumbers.textContent = numbers;
+            lineNumbers.scrollTop = editor.scrollTop;
+        }
+
+        // Update status bar
+        function updateStatusBar() {
+            const editor = document.getElementById('editor');
+            const text = editor.value.substring(0, editor.selectionStart);
+            const lines = text.split('\n');
+            const currentLine = lines.length;
+            const currentCol = lines[lines.length - 1].length + 1;
+            
+            document.getElementById('cursorPosition').textContent = `Ln ${currentLine}, Col ${currentCol}`;
+            
+            // Language mode
+            const ext = currentFile.split('.').pop();
+            const langMap = {
+                'html': 'HTML',
+                'css': 'CSS',
+                'js': 'JavaScript',
+                'md': 'Markdown'
+            };
+            document.getElementById('languageMode').textContent = langMap[ext] || 'Plain Text';
+            
+            // File size
+            const size = new Blob([editor.value]).size;
+            document.getElementById('fileSize').textContent = formatFileSize(size);
+            
+            // Save status
+            document.getElementById('saveStatus').textContent = 'Saved';
+            document.getElementById('autoSaveIndicator').classList.toggle('hidden', !autoSaveEnabled);
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // Run code
+        function runCode() {
+            const code = document.getElementById('editor').value;
+            const ext = currentFile.split('.').pop();
+            
+            try {
+                if (ext === 'html') {
+                    // For HTML, show in preview
+                    previewCode();
+                } else if (ext === 'js') {
+                    // For JS, run in console
+                    const consoleOutput = document.createElement('div');
+                    consoleOutput.style.cssText = 'background:#1e1e1e;color:#d4d4d4;padding:20px;font-family:monospace;white-space:pre-wrap;';
+                    consoleOutput.textContent = 'Running JavaScript...\n\n';
+                    
+                    // Capture console.log
+                    const logs = [];
+                    const originalLog = console.log;
+                    console.log = function(...args) {
+                        logs.push(args.join(' '));
+                        originalLog.apply(console, args);
+                    };
+                    
+                    eval(code);
+                    
+                    console.log = originalLog;
+                    
+                    if (logs.length > 0) {
+                        consoleOutput.textContent += logs.join('\n');
+                    } else {
+                        consoleOutput.textContent += '// No output';
+                    }
+                    
+                    showPreview(consoleOutput.outerHTML);
+                } else if (ext === 'css') {
+                    // For CSS, show applied styles
+                    const html = `<!DOCTYPE html>
+<html>
+<head>
+    <style>${code}</style>
+</head>
+<body>
+    <div style="padding:20px;">
+        <h1>CSS Preview</h1>
+        <p>This is a paragraph to demonstrate the CSS.</p>
+        <button>Sample Button</button>
+        <div class="container">
+            <p>Container content</p>
+        </div>
+    </div>
+</body>
+</html>`;
+                    showPreview(html);
+                } else {
+                    alert('File type not supported for running.');
+                }
+            } catch (error) {
+                alert('Error running code: ' + error.message);
+            }
+        }
+
+        // Preview code
+        function previewCode() {
+            const code = document.getElementById('editor').value;
+            const ext = currentFile.split('.').pop();
+            
+            let html = code;
+            if (ext === 'css') {
+                html = `<!DOCTYPE html>
+<html>
+<head>
+    <style>${code}</style>
+</head>
+<body>
+    <div style="padding:20px;">
+        <h1>CSS Preview</h1>
+        <p>This is a paragraph to demonstrate the CSS.</p>
+        <button>Sample Button</button>
+        <div class="container">
+            <p>Container content</p>
+        </div>
+    </div>
+</body>
+</html>`;
+            } else if (ext === 'js') {
+                html = `<!DOCTYPE html>
+<html>
+<head>
+    <title>JavaScript Preview</title>
+</head>
+<body>
+    <div id="output" style="padding:20px;font-family:monospace;"></div>
+    <script>
+        const logs = [];
+        const originalLog = console.log;
+        console.log = function(...args) {
+            logs.push(args.join(' '));
+            originalLog.apply(console, args);
+        };
+        
+        try {
+            ${code}
+            document.getElementById('output').innerHTML = logs.join('<br>') || 'No output';
+        } catch (error) {
+            document.getElementById('output').innerHTML = 'Error: ' + error.message;
+        }
+        
+        console.log = originalLog;
+    <\/script>
+</body>
+</html>`;
+            }
+            
+            showPreview(html);
+        }
+
+        // Show preview
+        function showPreview(html) {
+            const previewContainer = document.getElementById('previewContainer');
+            const previewFrame = document.getElementById('previewFrame');
+            
+            previewFrame.srcdoc = html;
+            previewContainer.style.display = 'flex';
+        }
+
+        // Close preview
+        function closePreview() {
+            document.getElementById('previewContainer').style.display = 'none';
+        }
+
+        // Format code
+        function formatCode() {
+            const editor = document.getElementById('editor');
+            const code = editor.value;
+            const ext = currentFile.split('.').pop();
+            
+            let formatted = code;
+            
+            if (ext === 'html') {
+                // Simple HTML formatting
+                formatted = code
+                    .replace(/></g, '>\n<')
+                    .replace(/></g, '>\n<')
+                    .replace(/<!--/g, '<!--\n')
+                    .replace(/-->/g, '\n-->')
+                    .replace(/\/>/g, '/>\n')
+                    .split('\n')
+                    .map(line => {
+                        const indent = (line.match(/^(\s*)/)[0] || '').length / 2;
+                        return '  '.repeat(indent) + line.trim();
+                    })
+                    .join('\n');
+            } else if (ext === 'css') {
+                // Simple CSS formatting
+                formatted = code
+                    .replace(/;/g, ';\n')
+                    .replace(/{/g, '{\n')
+                    .replace(/}/g, '}\n')
+                    .replace(/:/g, ': ')
+                    .split('\n')
+                    .map(line => {
+                        if (line.trim().endsWith('{') || line.trim().endsWith('}')) {
+                            return line;
+                        }
+                        const indent = (line.match(/^(\s*)/)[0] || '').length / 2;
+                        return '  '.repeat(indent) + line.trim();
+                    })
+                    .join('\n');
+            } else if (ext === 'js') {
+                // Simple JS formatting
+                formatted = code
+                    .replace(/;/g, ';\n')
+                    .replace(/{/g, '{\n')
+                    .replace(/}/g, '}\n')
+                    .replace(/,/g, ',\n')
+                    .split('\n')
+                    .map(line => {
+                        if (line.trim().endsWith('{') || line.trim().endsWith('}')) {
+                            return line;
+                        }
+                        const indent = (line.match(/^(\s*)/)[0] || '').length / 2;
+                        return '  '.repeat(indent) + line.trim();
+                    })
+                    .join('\n');
+            }
+            
+            editor.value = formatted;
+            updateLineNumbers();
+            updateStatusBar();
+        }
+
+        // Toggle settings
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.toggle('active');
+        }
+
+        // Apply theme
+        function applyTheme(theme) {
+            document.body.className = `theme-${theme}`;
+            
+            // Update theme colors
+            const themes = {
+                dark: { bg: '#1e1e1e', text: '#d4d4d4', accent: '#007acc' },
+                light: { bg: '#ffffff', text: '#333333', accent: '#0078d4' },
+                blue: { bg: '#1a1a2e', text: '#e6e6e6', accent: '#4cc9f0' },
+                green: { bg: '#1e2a1e', text: '#d4f0d4', accent: '#4ade80' },
+                purple: { bg: '#2d1b4e', text: '#e0d0f0', accent: '#a855f7' }
+            };
+            
+            const colors = themes[theme];
+            if (colors) {
+                document.documentElement.style.setProperty('--bg-primary', colors.bg);
+                document.documentElement.style.setProperty('--text-primary', colors.text);
+                document.documentElement.style.setProperty('--accent', colors.accent);
+            }
+        }
+
+        // Save file
+        function saveFile() {
+            const code = document.getElementById('editor').value;
+            fileContents[currentFile] = code;
+            
+            // Show save indicator
+            const status = document.getElementById('saveStatus');
+            status.textContent = 'Saved';
+            status.style.color = '#4ade80';
+            
+            setTimeout(() => {
+                status.style.color = '';
+            }, 1000);
+            
+            updateStatusBar();
+        }
+
+        // New file
+        function newFile() {
+            const fileName = `untitled-${openFiles.length + 1}.html`;
+            fileContents[fileName] = '<!DOCTYPE html>\n<html>\n<head>\n    <title>New File</title>\n</head>\n<body>\n    <h1>New File</h1>\n</body>\n</html>';
+            
+            openFile(fileName);
+            switchToFile(fileName);
+        }
+
+        // Toggle auto complete
+        function toggleAutoComplete() {
+            autoCompleteEnabled = !autoCompleteEnabled;
+            event.target.style.opacity = autoCompleteEnabled ? '1' : '0.5';
+        }
+
+        // Show auto complete
+        function showAutoComplete() {
+            const editor = document.getElementById('editor');
+            const cursorPos = editor.selectionStart;
+            const textBeforeCursor = editor.value.substring(0, cursorPos);
+            const word = textBeforeCursor.split(/[\s>=\"/']/).pop();
+            
+            const suggestions = getSuggestions(word);
+            if (suggestions.length > 0) {
+                const suggestion = suggestions[0];
+                const remaining = suggestion.substring(word.length);
+                
+                editor.value = editor.value.substring(0, cursorPos) + remaining + editor.value.substring(cursorPos);
+                editor.selectionStart = editor.selectionEnd = cursorPos + remaining.length;
+                updateLineNumbers();
+            }
+        }
+
+        // Get suggestions
+        function getSuggestions(word) {
+            const htmlTags = ['div', 'span', 'p', 'h1', 'h2', 'h3', 'button', 'input', 'form', 'label', 'img', 'a', 'ul', 'li', 'ol', 'table', 'tr', 'td', 'th', 'thead', 'tbody'];
+            const cssProps = ['color', 'background', 'margin', 'padding', 'font-size', 'font-weight', 'display', 'flex', 'grid', 'width', 'height', 'border', 'border-radius', 'box-shadow'];
+            const jsFuncs = ['console.log', 'alert', 'prompt', 'confirm', 'setTimeout', 'setInterval', 'addEventListener', 'querySelector', 'getElementById', 'createElement'];
+            
+            const ext = currentFile.split('.').pop();
+            let suggestions = [];
+            
+            if (ext === 'html') {
+                suggestions = htmlTags.filter(tag => tag.startsWith(word));
+            } else if (ext === 'css') {
+                suggestions = cssProps.filter(prop => prop.startsWith(word));
+            } else if (ext === 'js') {
+                suggestions = jsFuncs.filter(func => func.startsWith(word));
+            }
+            
+            return suggestions;
+        }
+
+        // Setup auto save
+        function setupAutoSave() {
+            const editor = document.getElementById('editor');
+            
+            editor.addEventListener('input', function() {
+                if (autoSaveEnabled) {
+                    scheduleAutoSave();
+                }
+            });
+        }
+
+        // Schedule auto save
+        function scheduleAutoSave() {
+            if (autoSaveTimer) {
+                clearTimeout(autoSaveTimer);
+            }
+            
+            autoSaveTimer = setTimeout(() => {
+                saveFile();
+            }, 1000);
+        }
+
+        // Keyboard shortcuts help
+        function showShortcuts() {
+            alert(`Keyboard Shortcuts:
+Ctrl+S - Save
+Ctrl+Enter - Run
+Ctrl+P - Preview
+Ctrl+N - New File
+Ctrl+Space - Autocomplete
+Shift+Alt+F - Format`);
+        }
+    </script>
+</body>
+</html>
