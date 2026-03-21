@@ -1,1507 +1,354 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Craby Editor Pro</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦀</text></svg>">
-<link href="style.css" rel="stylesheet">
-    
-</head>
-<body>
-
-    <!-- Header -->
-    <header class="header">
-        <div class="header-left">
-            <div class="logo">
-                <i class="fas fa-crab logo-icon"></i>
-                <span class="logo-text">CRABY</span>
-                <span class="logo-sub">PRO</span>
-            </div>
-        </div>
-        
-        <div class="header-center">
-            <div class="file-tabs" id="file-tabs"></div>
-        </div>
-        
-        <div class="header-right">
-            <button class="btn btn-icon" onclick="beautifyCode()" title="Beautify Code">
-                <i class="fas fa-magic"></i>
-            </button>
-            <button class="btn btn-icon" onclick="downloadAll()" title="Download All">
-                <i class="fas fa-download"></i>
-            </button>
-            <button class="btn btn-primary run-btn" onclick="runCode()">
-                <i class="fas fa-play"></i>
-                <span>RUN</span>
-            </button>
-            <button class="btn btn-icon" onclick="toggleSettings()" title="Settings">
-                <i class="fas fa-cog"></i>
-            </button>
-        </div>
-    </header>
-
-    <!-- Mobile Bottom Toolbar -->
-    <div class="mobile-toolbar">
-        <button class="mobile-btn" onclick="toggleShutter()">
-            <i class="fas fa-folder-open"></i>
-        </button>
-        <button class="mobile-btn" onclick="toggleConsole()">
-            <i class="fas fa-terminal"></i>
-        </button>
-        <button class="mobile-btn mobile-btn-run" onclick="runCode()">
-            <i class="fas fa-play"></i>
-        </button>
-        <button class="mobile-btn" onclick="toggleSettings()">
-            <i class="fas fa-cog"></i>
-        </button>
-        <button class="mobile-btn" onclick="beautifyCode()">
-            <i class="fas fa-magic"></i>
-        </button>
-    </div>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Left Sidebar (Taskbar) -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h3><i class="fas fa-folder-tree"></i> TASKBAR</h3>
-                <button class="btn btn-icon btn-sm" onclick="addNewFile()">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </div>
-            
-            <div class="file-list" id="file-list"></div>
-            
-            <div class="sidebar-footer">
-                <button class="btn btn-block" onclick="addNewFile()">
-                    <i class="fas fa-plus"></i> NEW FILE
-                </button>
-            </div>
-        </aside>
-
-        <!-- Sidebar Toggle (Mobile) -->
-        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
-        
-        <div class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">
-            <i class="fas fa-chevron-right"></i>
-        </div>
-
-        <!-- Editor Area -->
-        <div class="editor-area" id="editor-area">
-            <!-- Editor panels will be added dynamically -->
-        </div>
-    </main>
-
-    <!-- Settings Panel -->
-    <div class="settings-panel" id="settings-panel">
-        <div class="settings-header">
-            <h3><i class="fas fa-sliders-h"></i> SETTINGS</h3>
-            <button class="btn btn-icon btn-sm" onclick="toggleSettings()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <div class="settings-content">
-            <!-- Editor Section -->
-            <div class="settings-section">
-                <h4><i class="fas fa-code"></i> Editor</h4>
-                
-                <div class="setting-item">
-                    <label>Font Family</label>
-                    <select id="setting-font" onchange="updateSettings()">
-                        <option value="'Fira Code', monospace">Fira Code</option>
-                        <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
-                        <option value="'Source Code Pro', monospace">Source Code Pro</option>
-                        <option value="'Roboto Mono', monospace">Roboto Mono</option>
-                        <option value="'Ubuntu Mono', monospace">Ubuntu Mono</option>
-                    </select>
-                </div>
-                
-                <div class="setting-item">
-                    <label>Font Size: <span id="font-size-display">14px</span></label>
-                    <input type="range" id="setting-font-size" min="10" max="24" value="14" oninput="updateSettings()">
-                </div>
-                
-                <div class="setting-item">
-                    <label>Tab Size</label>
-                    <select id="setting-tab-size" onchange="updateSettings()">
-                        <option value="2">2 spaces</option>
-                        <option value="4">4 spaces</option>
-                    </select>
-                </div>
-            </div>
-            
-            <!-- Appearance Section -->
-            <div class="settings-section">
-                <h4><i class="fas fa-palette"></i> Appearance</h4>
-                
-                <div class="setting-item">
-                    <label>Theme</label>
-                    <select id="setting-theme" onchange="updateSettings()">
-                        <option value="dark">Github Dark</option>
-                        <option value="light">Light Mode</option>
-                        <option value="monokai">Monokai</option>
-                        <option value="dracula">Dracula</option>
-                        <option value="nord">Nord</option>
-                        <option value="cyberpunk">Cyberpunk</option>
-                        <option value="matrix">Matrix</option>
-                        <option value="midnight">Midnight</option>
-                        <option value="synthwave">Synthwave</option>
-                    </select>
-                </div>
-                
-                <div class="setting-item">
-                    <label>Accent Color</label>
-                    <div class="color-picker">
-                        <input type="color" id="setting-accent" value="#ffb400" onchange="updateSettings()">
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Features Section -->
-            <div class="settings-section">
-                <h4><i class="fas fa-star"></i> Features</h4>
-                
-                <div class="setting-item toggle-item">
-                    <label>Line Numbers</label>
-                    <label class="toggle">
-                        <input type="checkbox" id="setting-line-numbers" onchange="updateSettings()">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item toggle-item">
-                    <label>Auto Suggestions</label>
-                    <label class="toggle">
-                        <input type="checkbox" id="setting-suggestions" checked onchange="updateSettings()">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item toggle-item">
-                    <label>Auto Close Brackets</label>
-                    <label class="toggle">
-                        <input type="checkbox" id="setting-auto-brackets" checked onchange="updateSettings()">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item toggle-item">
-                    <label>Auto Save</label>
-                    <label class="toggle">
-                        <input type="checkbox" id="setting-auto-save" checked onchange="updateSettings()">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-            </div>
-            
-            <button class="btn btn-primary btn-block" onclick="saveAndCloseSettings()">
-                SAVE & CLOSE
-            </button>
-            
-            <button class="btn btn-outline btn-block" style="margin-top: 10px;" onclick="resetSettings()">
-                RESET ALL
-            </button>
-        </div>
-    </div>
-
-    <!-- Preview Overlay -->
-    <div class="preview-overlay" id="preview-overlay">
-        <div class="preview-header">
-            <div class="preview-controls">
-                <button class="preview-dot" style="background: #ff5f57;"></button>
-                <button class="preview-dot" style="background: #febc2e;"></button>
-                <button class="preview-dot" style="background: #28c840;"></button>
-            </div>
-            
-            <div class="preview-address">
-                <i class="fas fa-lock"></i>
-                <span id="preview-url">localhost:3000</span>
-            </div>
-            
-            <div class="preview-actions">
-                <button class="btn btn-icon" onclick="refreshPreview()" title="Refresh">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-                <div class="device-toggle">
-                    <button class="btn btn-icon active" id="btn-desktop" onclick="setPreviewDevice('desktop')" title="Desktop">
-                        <i class="fas fa-desktop"></i>
-                    </button>
-                    <button class="btn btn-icon" id="btn-mobile" onclick="setPreviewDevice('mobile')" title="Mobile">
-                        <i class="fas fa-mobile-alt"></i>
-                    </button>
-                </div>
-                <button class="btn btn-primary" onclick="closePreview()">
-                    <i class="fas fa-times"></i> CLOSE
-                </button>
-            </div>
-        </div>
-        
-        <div class="preview-body" id="preview-body">
-            <iframe id="preview-frame"></iframe>
-        </div>
-    </div>
-
-    <!-- Console Panel -->
-    <div class="console-panel" id="console-panel">
-        <div class="console-header">
-            <span><i class="fas fa-terminal"></i> CONSOLE</span>
-            <button class="btn btn-icon btn-sm" onclick="toggleConsole()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="console-content" id="console-content"></div>
-    </div>
-
-    <!-- Suggestions Box -->
-    <div class="suggestions-box" id="suggestions-box">
-        <div class="suggestions-header">Suggestions</div>
-        <div class="suggestions-list" id="suggestions-list"></div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <span class="footer-text">Made with <i class="fas fa-heart"></i> by Angad</span>
-            <div class="footer-links">
-                <a href="https://instagram.com/deshmaneangad" target="_blank" class="footer-link" title="Instagram">
-                    <i class="fab fa-instagram"></i>
-                </a>
-                <a href="https://facebook.com/deshmaneangad" target="_blank" class="footer-link" title="Facebook">
-                    <i class="fab fa-facebook-f"></i>
-                </a>
-                <a href="mailto:deshmaneangad324@gmail.com" class="footer-link" title="Email">
-                    <i class="fas fa-envelope"></i>
-                </a>
-            </div>
-        </div>
-    </footer>
-
-</div>
-
-<script>/**
- * CRABY EDITOR PRO - JavaScript Logic
- * Advanced Web-Based Code Editor
- */
-
-// ==========================================
-// GLOBAL STATE & CONFIGURATION
-// ==========================================
-
-const AppState = {
-    files: {
-        'index.html': {
-            type: 'html',
-            content: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Project</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="container">
-        <h1>Welcome to Craby Editor Pro! 🦀</h1>
-        <p>Start building your amazing project.</p>
-        <button class="btn" onclick="sayHello()">Click Me</button>
-    </div>
-    
-    <script src="script.js"><\/script>
-</body>
-</html>`,
-            visible: true
-        },
-        'style.css': {
-            type: 'css',
-            content: `/* Global Styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* --- 1. CORE LAYOUT --- */
+:root {
+    --bg-main: #0d1117;
+    --bg-panel: #161b22;
+    --bg-header: #010409;
+    --accent: #ffb400;
+    --text-primary: #c9d1d9;
+    --border: rgba(255, 255, 255, 0.1);
+    --window-header-bg: #21262d;
 }
+
 
 body {
-    font-family: 'Segoe UI', Tahoma, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; 
+}
+
+/* --- 2. HEADER: FIXED --- */
+header {
+    height: 60px;
+    background: var(--bg-header);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+    border-bottom: 2px solid var(--accent);
+    position: sticky; 
+    top: 0;
+    z-index: 3000; 
+}
+
+logo-container { display: flex; align-items: center; gap: 10px; }
+.logo-container img { height: 35px; width: auto; }
+.logo-text { color: var(--accent); font-weight: 800; font-size: 1.2rem; letter-spacing: 1px; }
+
+.header-actions { display: flex; gap: 10px; align-items: center; }
+
+/* Header Buttons Size Fix */
+.icon-btn {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    color: white;
+    padding: 8px 14px; /* Balanced size */
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 8px;
 }
 
-.container {
-    text-align: center;
-    padding: 40px;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 20px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+.icon-btn:hover { background: #1c2128; border-color: var(--accent); }
+.icon-btn i { color: var(--accent); }
+
+.run-btn {
+    background: rgba(255, 180, 0, 0.1) !important;
+    border: 1px solid var(--accent) !important;
+    color: var(--accent) !important;
+    font-weight: 800;
 }
 
-h1 {
-    color: #333;
-    margin-bottom: 15px;
-    font-size: 2.5rem;
+.run-btn:hover { background: var(--accent) !important; color: #000 !important; }
+
+/* --- 3. SMART EDITOR AREA --- */
+.main-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; 
+    padding: 10px;
 }
 
-p {
-    color: #666;
-    margin-bottom: 25px;
-    font-size: 1.1rem;
+.editor-grid {
+    display: flex;
+    flex-direction: column;
+    height: 100%; 
+    gap: 10px;
 }
 
-.btn {
-    padding: 15px 40px;
-    font-size: 1.1rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+/* --- 4. WINDOW BOX & TEXTAREA --- */
+.window-frame {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    flex: 1; 
+    min-height: 40px; 
+    overflow: hidden;
+    transition: flex 0.3s ease;
+}
+
+.window-frame.fullscreen {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 60px);
+    z-index: 500;
+}
+
+.window-header {
+    background: var(--window-header-bg);
+    padding: 8px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.window-title { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
+
+.window-controls { display: flex; gap: 12px; }
+.window-controls i { cursor: pointer; font-size: 12px; color: var(--accent); opacity: 0.7; transition: 0.2s; }
+.window-controls i:hover { opacity: 1; transform: scale(1.1); }
+
+.window-body { flex: 1; display: flex; }
+
+/* --- SYNTAX GLOW COLORS --- */
+
+.tag { 
+    color: #ff7b72; 
+    text-shadow: 0 0 8px rgba(255, 123, 114, 0.5); 
+    font-weight: bold;
+}
+
+.attr { 
+    color: #79c0ff; 
+    text-shadow: 0 0 8px rgba(121, 192, 255, 0.5); 
+}
+
+.keyword { 
+    color: #d2a8ff; 
+    text-shadow: 0 0 10px rgba(210, 168, 255, 0.6); 
+    font-weight: bold;
+}
+
+.string { 
+    color: #a5d6ff; 
+    text-shadow: 0 0 5px rgba(165, 214, 255, 0.4); 
+}
+
+.number { 
+    color: #f0883e; 
+    text-shadow: 0 0 8px rgba(240, 136, 62, 0.5); 
+}
+
+/* --- TEXTAREA OVERLAY FOR GLOW --- */
+.highlight-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 12px; /* textarea च्या padding शी मॅच करा */
+    pointer-events: none; /* क्लिक textarea वर व्हावे म्हणून */
+    white-space: pre;
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.input-layer {
+    position: relative;
+    z-index: 2;
+    color: transparent !important; /* ओरिजिनल टेक्स्ट लपवण्यासाठी */
+    caret-color: #ffb400; /* फक्त कर्सर दिसेल */
+    background: transparent !important;
+}
+textarea {
+    flex: 1;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
     border: none;
-    border-radius: 50px;
-    cursor: pointer;
+    color: #9cdcfe;
+    padding: 12px;
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    outline: none;
+    resize: none;
+    white-space: pre;
+    overflow: auto;
+    text-shadow: 0 0 8px rgba(156, 221, 254, 0.4);
     transition: all 0.3s ease;
-    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
 }
 
-.btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 30px rgba(102, 126, 234, 0.5);
-}`,
-            visible: true
-        },
-        'script.js': {
-            type: 'js',
-            content: `// Craby Editor Pro - JavaScript
-function sayHello() {
-    const messages = [
-        "Hello from Craby! 🦀",
-        "You're awesome!",
-        "Keep coding!",
-        "Build something amazing!",
-        "Craby loves you!"
-    ];
-    const randomMsg = messages[Math.floor(Math.random() * messages.length)];
-    alert(randomMsg);
+textarea:focus {
+    background: rgba(255, 255, 255, 0.05);
+    text-shadow: 0 0 12px rgba(156, 221, 254, 0.6);
 }
 
-// Console log for debugging
-console.log("Craby Editor Pro loaded! 🦀");`,
-            visible: true
-        }
-    },
-    activeFile: 'index.html',
-    settings: {
-        theme: 'dark',
-        fontFamily: "'Fira Code', monospace",
-        fontSize: 14,
-        tabSize: 2,
-        lineNumbers: true,
-        suggestions: true,
-        autoBrackets: true,
-        autoSave: true,
-        accentColor: '#ffb400'
-    },
-    consoleLogs: []
-};
-
-// Dictionary for auto-suggestions
-const Dictionary = {
-    html: [
-        'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'a', 'button', 'input',
-        'img', 'ul', 'ol', 'li', 'form', 'label', 'select', 'option', 'textarea',
-        'table', 'tr', 'td', 'th', 'thead', 'tbody', 'article', 'aside', 'footer',
-        'header', 'main', 'nav', 'section', 'script', 'style', 'link', 'meta',
-        'title', 'head', 'body', 'html', 'br', 'hr', 'iframe', 'canvas', 'svg',
-        'video', 'audio', 'source', 'picture', 'figure', 'figcaption', 'dialog',
-        'details', 'summary', 'mark', 'time', 'abbr', 'code', 'pre', 'blockquote'
-    ],
-    css: [
-        'color', 'background', 'background-color', 'background-image', 'background-size',
-        'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
-        'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
-        'display', 'flex', 'grid', 'block', 'inline', 'inline-block', 'none', 'hidden',
-        'position', 'absolute', 'relative', 'fixed', 'sticky',
-        'top', 'right', 'bottom', 'left', 'z-index',
-        'width', 'height', 'max-width', 'min-width', 'max-height', 'min-height',
-        'border', 'border-radius', 'border-width', 'border-color', 'border-style',
-        'box-shadow', 'text-shadow', 'opacity', 'transform', 'transition', 'animation',
-        'font-family', 'font-size', 'font-weight', 'font-style', 'text-align',
-        'line-height', 'letter-spacing', 'word-spacing', 'text-decoration',
-        'overflow', 'overflow-x', 'overflow-y', 'cursor', 'visibility', 'content',
-        'justify-content', 'align-items', 'flex-direction', 'flex-wrap', 'gap',
-        'grid-template-columns', 'grid-template-rows', 'grid-gap', 'place-items'
-    ],
-    js: [
-        'function', 'const', 'let', 'var', 'if', 'else', 'for', 'while', 'do',
-        'switch', 'case', 'break', 'continue', 'return', 'try', 'catch', 'finally',
-        'throw', 'new', 'this', 'class', 'extends', 'super', 'import', 'export',
-        'default', 'async', 'await', 'Promise', 'fetch', 'then', 'catch',
-        'document', 'window', 'console', 'Math', 'Array', 'Object', 'String',
-        'Number', 'Boolean', 'JSON', 'Date', 'RegExp', 'Error',
-        'querySelector', 'querySelectorAll', 'getElementById', 'getElementsByClassName',
-        'getElementsByTagName', 'createElement', 'appendChild', 'removeChild',
-        'addEventListener', 'removeEventListener', 'dispatchEvent',
-        'setTimeout', 'setInterval', 'clearTimeout', 'clearInterval',
-        'localStorage', 'sessionStorage', 'location', 'history', 'navigator',
-        'alert', 'confirm', 'prompt', 'console.log', 'console.error', 'console.warn',
-        'innerHTML', 'textContent', 'value', 'style', 'classList', 'className',
-        'scrollTo', 'scrollBy', 'scrollIntoView', 'matchMedia',
-        'preventDefault', 'stopPropagation', 'target', 'currentTarget',
-        'forEach', 'map', 'filter', 'reduce', 'find', 'findIndex', 'some', 'every',
-        'includes', 'indexOf', 'slice', 'splice', 'push', 'pop', 'shift', 'unshift',
-        'toString', 'valueOf', 'toFixed', 'toPrecision', 'parseInt', 'parseFloat',
-        'Math.random', 'Math.floor', 'Math.ceil', 'Math.round', 'Math.max', 'Math.min',
-        'Math.abs', 'Math.sin', 'Math.cos', 'Math.PI', 'Math.E'
-    ]
-};
-
-// ==========================================
-// INITIALIZATION
-// ==========================================
-
-document.addEventListener('DOMContentLoaded', () => {
-    initializeApp();
-});
-
-function initializeApp() {
-    // Show loader
-    simulateLoading(() => {
-        document.getElementById('loader').classList.add('hidden');
-        document.getElementById('app').style.display = 'flex';
-        
-        // Load saved data
-        loadSavedData();
-        
-        // Initialize UI
-        renderFileList();
-        renderFileTabs();
-        renderEditors();
-        loadSettings();
-        setupEventListeners();
-        
-        // Auto-save interval
-        if (AppState.settings.autoSave) {
-            setInterval(saveToLocalStorage, 5000);
-        }
-    });
+/* --- 5. SHUTTER (LEFT SLIDER) --- */
+#shutter-trigger {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--accent);
+    color: #000;
+    padding: 15px 8px;
+    border-radius: 0 8px 8px 0;
+    z-index: 2500; 
+    cursor: pointer;
+    transition: left 0.3s ease;
 }
 
-function simulateLoading(callback) {
-    const progress = document.getElementById('loader-progress');
-    const percent = document.getElementById('loader-percent');
-    let value = 0;
-    
-    const interval = setInterval(() => {
-        value += Math.random() * 15;
-        if (value >= 100) {
-            value = 100;
-            clearInterval(interval);
-            setTimeout(callback, 300);
-        }
-        progress.style.width = value + '%';
-        percent.textContent = Math.floor(value) + '%';
-    }, 100);
+.shutter.open { left: 0; }
+
+.shutter-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    padding: 15px; 
+    border-bottom: 1px solid var(--border);
 }
 
-function loadSavedData() {
-    const savedFiles = localStorage.getItem('craby_files');
-    const savedSettings = localStorage.getItem('craby_settings');
-    
-    if (savedFiles) {
-        try {
-            AppState.files = JSON.parse(savedFiles);
-        } catch (e) {
-            console.error('Failed to load saved files:', e);
-        }
+.shutter-list { padding: 15px; }
+
+.add-btn {
+    width: 100%; 
+    padding: 12px; 
+    background: var(--accent); 
+    border: none; 
+    border-radius: 6px; 
+    font-weight: bold; 
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+/* --- 6. SETTINGS PANEL (RIGHT SLIDER) --- */
+
+.settings-panel.open { right: 0; }
+
+.s-group { margin-bottom: 20px; }
+.s-group label { display: block; font-size: 11px; color: #8b949e; margin-bottom: 8px; font-weight: bold; text-transform: uppercase; }
+.s-group select, .s-group input {
+    width: 100%;
+    background: #0d1117;
+    border: 1px solid var(--border);
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    outline: none;
+}
+.checkbox-group { display: flex; gap: 15px; }
+.checkbox-group label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+
+/* --- 7. PREVIEW OVERLAY --- */
+.preview-overlay {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+}
+
+.overlay-header {
+    height: 60px;
+    background: var(--bg-panel);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+}
+/* --- SHUTTER (LEFT SLIDER) - MODERN TRANSPARENT --- */
+.shutter {
+    position: fixed;
+    left: -320px;
+    top: 0;
+    width: 300px;
+    height: 100%;
+    /* Glass Effect: Background with Blur */
+    background: rgba(22, 27, 34, 0.7); 
+    backdrop-filter: blur(2px); 
+    -webkit-backdrop-filter: blur(2px);
+    border-right: 1.5px solid var(--accent);
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 4000; 
+    padding: 0;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+}
+
+.shutter.open { 
+    left: 0; 
+}
+
+/* --- SETTINGS PANEL (RIGHT SLIDER) - MODERN TRANSPARENT --- */
+.settings-panel {
+    position: fixed;
+    right: -320px;
+    top: 0;
+    width: 300px;
+    height: 100%;
+    /* Glass Effect: Background with Blur */
+    background: rgba(22, 27, 34, 0.7); 
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    border-left: 1.5px solid var(--accent);
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 4000; 
+    padding: 20px;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+}
+
+.settings-panel.open { 
+    right: 0; 
+}
+
+/* --- SHUTTER TRIGGER BUTTON (UPGRADED) --- */
+#shutter-trigger {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--accent);
+    color: #000;
+    padding: 15px 10px;
+    border-radius: 0 10px 10px 0;
+    z-index: 2500; 
+    cursor: pointer;
+    box-shadow: 2px 0 10px rgba(255, 180, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+#shutter-trigger:hover {
+    padding-left: 15px;
+    background: #fff;
+}
+
+#output-frame { flex: 1; border: none; width: 100%; background: white; }
+
+/* Suggestion Box Fix */
+#suggestion-box {
+    position: absolute;
+    z-index: 5000;
+    background: #1c2128;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
-    
-    if (savedSettings) {
-        try {
-            AppState.settings = { ...AppState.settings, ...JSON.parse(savedSettings) };
-        } catch (e) {
-            console.error('Failed to load settings:', e);
-        }
-    }
-}
-
-function saveToLocalStorage() {
-    localStorage.setItem('craby_files', JSON.stringify(AppState.files));
-    localStorage.setItem('craby_settings', JSON.stringify(AppState.settings));
-}
-
-// ==========================================
-// UI RENDERING
-// ==========================================
-
-function renderFileList() {
-    const fileList = document.getElementById('file-list');
-    fileList.innerHTML = '';
-    
-    Object.entries(AppState.files).forEach(([name, data]) => {
-        const item = document.createElement('div');
-        item.className = `file-item ${name === AppState.activeFile ? 'active' : ''}`;
-        item.onclick = () => switchToFile(name);
-        
-        const iconMap = { html: 'fa-html5', css: 'fa-css3-alt', js: 'fa-js' };
-        const colorMap = { html: '#e34f26', css: '#1572b6', js: '#f7df1e' };
-        
-        item.innerHTML = `
-            <i class="file-icon fab ${iconMap[data.type] || 'fa-file-code'}" style="color: ${colorMap[data.type] || 'var(--accent)'}"></i>
-            <span class="file-name">${name}</span>
-            <i class="file-delete fas fa-trash-alt" onclick="event.stopPropagation(); deleteFile('${name}')"></i>
-        `;
-        
-        fileList.appendChild(item);
-    });
-}
-
-function renderFileTabs() {
-    const tabs = document.getElementById('file-tabs');
-    tabs.innerHTML = '';
-    
-    Object.entries(AppState.files).forEach(([name, data]) => {
-        if (!data.visible) return;
-        
-        const tab = document.createElement('div');
-        tab.className = `file-tab ${name === AppState.activeFile ? 'active' : ''}`;
-        tab.onclick = () => switchToFile(name);
-        
-        const iconMap = { html: 'fa-html5', css: 'fa-css3-alt', js: 'fa-js' };
-        
-        tab.innerHTML = `
-            <i class="tab-icon fab ${iconMap[data.type] || 'fa-file-code'}"></i>
-            <span class="tab-name">${name}</span>
-            <i class="tab-close fas fa-times" onclick="event.stopPropagation(); deleteFile('${name}')"></i>
-        `;
-        
-        tabs.appendChild(tab);
-    });
-}
-
-function renderEditors() {
-    const editorArea = document.getElementById('editor-area');
-    editorArea.innerHTML = '';
-    
-    Object.entries(AppState.files).forEach(([name, data]) => {
-        if (!data.visible) return;
-        
-        const panel = document.createElement('div');
-        panel.className = 'editor-panel';
-        panel.id = `panel-${name.replace('.', '-')}`;
-        
-        const iconMap = { html: 'fa-html5', css: 'fa-css3-alt', js: 'fa-js' };
-        const colorMap = { html: '#e34f26', css: '#1572b6', js: '#f7df1e' };
-        
-        panel.innerHTML = `
-            <div class="editor-header" onclick="togglePanelCollapse('${name.replace('.', '-')}')">
-                <div class="editor-title">
-                    <i class="title-icon fab ${iconMap[data.type] || 'fa-file-code'}" style="color: ${colorMap[data.type] || 'var(--accent)'}"></i>
-                    <span class="title-name">${name}</span>
-                </div>
-                <div class="editor-actions" onclick="event.stopPropagation()">
-                    <button class="btn btn-icon btn-sm" onclick="expandPanel('${name.replace('.', '-')}')" title="Expand">
-                        <i class="fas fa-expand-alt"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="editor-body">
-                <div class="line-numbers" id="lines-${name.replace('.', '-')}">1</div>
-                <div class="code-editor" id="editor-${name.replace('.', '-')}">
-                    <div class="highlight-layer" id="highlight-${name.replace('.', '-')}"></div>
-                    <div class="edit-layer" 
-                         contenteditable="true" 
-                         id="edit-${name.replace('.', '-')}"
-                         data-file="${name}"
-                         data-type="${data.type}"
-                         spellcheck="false">${escapeHtml(data.content)}</div>
-                </div>
-            </div>
-        `;
-        
-        editorArea.appendChild(panel);
-    });
-    
-    // Setup editor event listeners
-    setupEditorListeners();
-    updateAllHighlights();
-    updateLineNumbers();
-}
-
-function setupEditorListeners() {
-    document.querySelectorAll('.edit-layer').forEach(editor => {
-        const fileName = editor.dataset.file;
-        const fileType = editor.dataset.type;
-        
-        // Input event for real-time highlighting
-        editor.addEventListener('input', (e) => {
-            const content = editor.textContent;
-            AppState.files[fileName].content = content;
-            updateHighlight(editor.id, fileType);
-            updateLineNumbersFor(fileName.replace('.', '-'));
-        });
-        
-        // Keydown for special keys
-        editor.addEventListener('keydown', (e) => {
-            handleSpecialKeys(e, editor);
-        });
-        
-        // Tab handling
-        editor.addEventListener('keydown', (e) => {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                if (e.shiftKey) {
-                    // Outdent (simplified)
-                    document.execCommand('outdent');
-                } else {
-                    // Indent with spaces
-                    document.execCommand('insertText', false, '  ');
-                }
-            }
-        });
-        
-        // Scroll sync
-        editor.addEventListener('scroll', () => {
-            const highlightLayer = document.getElementById('highlight-' + editor.id.replace('edit-', ''));
-            const linesEl = document.getElementById('lines-' + editor.id.replace('edit-', ''));
-            highlightLayer.scrollTop = editor.scrollTop;
-            highlightLayer.scrollLeft = editor.scrollLeft;
-            if (linesEl) {
-                linesEl.scrollTop = editor.scrollTop;
-            }
-        });
-    });
-}
-
-function handleSpecialKeys(e, editor) {
-    const fileType = editor.dataset.type;
-    
-    // Auto-close brackets
-    if (AppState.settings.autoBrackets) {
-        const pairs = {
-            '{': '}',
-            '(': ')',
-            '[': ']',
-            '"': '"',
-            "'": "'",
-            '<': '>'
-        };
-        
-        if (pairs[e.key]) {
-            e.preventDefault();
-            const selection = window.getSelection();
-            const range = selection.getRangeAt(0);
-            const cursorPos = range.startOffset;
-            
-            const before = editor.textContent.substring(0, cursorPos);
-            const after = editor.textContent.substring(cursorPos);
-            
-            editor.textContent = before + e.key + pairs[e.key] + after;
-            
-            // Move cursor between brackets
-            range.setStart(editor.firstChild, cursorPos + 1);
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
-            
-            AppState.files[editor.dataset.file].content = editor.textContent;
-            updateHighlight(editor.id, fileType);
-        }
-    }
-    
-    // Enter key for auto-indent
-    if (e.key === 'Enter' && fileType !== 'html') {
-        e.preventDefault();
-        const selection = window.getSelection();
-        const range = selection.getRangeAt(0);
-        const cursorPos = range.startOffset;
-        const text = editor.textContent;
-        
-        // Find current line
-        const beforeCursor = text.substring(0, cursorPos);
-        const lineStart = beforeCursor.lastIndexOf('\n') + 1;
-        const currentLine = beforeCursor.substring(lineStart);
-        
-        // Calculate indentation
-        let indent = '';
-        for (let char of currentLine) {
-            if (char === ' ' || char === '\t') indent += char;
-            else break;
-        }
-        
-        // Check if line ends with opening brace
-        const trimmedLine = currentLine.trim();
-        if (trimmedLine.endsWith('{') || trimmedLine.endsWith('(') || trimmedLine.endsWith('[')) {
-            indent += '  ';
-        }
-        
-        editor.textContent = text.substring(0, cursorPos) + '\n' + indent + text.substring(cursorPos);
-        
-        // Move cursor to new position
-        const newPos = cursorPos + 1 + indent.length;
-        range.setStart(editor.firstChild, newPos);
-        range.collapse(true);
-        selection.removeAllRanges();
-        selection.addRange(range);
-        
-        AppState.files[editor.dataset.file].content = editor.textContent;
-        updateHighlight(editor.id, fileType);
-        updateLineNumbersFor(editor.id.replace('edit-', ''));
-    }
-}
-
-// ==========================================
-// SYNTAX HIGHLIGHTING
-// ==========================================
-
-function updateHighlight(editorId, type) {
-    const editor = document.getElementById(editorId);
-    const highlightLayer = document.getElementById('highlight-' + editorId.replace('edit-', ''));
-    
-    if (!editor || !highlightLayer) return;
-    
-    const content = editor.textContent;
-    let highlighted = '';
-    
-    switch (type) {
-        case 'html':
-            highlighted = highlightHTML(content);
-            break;
-        case 'css':
-            highlighted = highlightCSS(content);
-            break;
-        case 'js':
-            highlighted = highlightJS(content);
-            break;
-    }
-    
-    highlightLayer.innerHTML = highlighted;
-}
-
-function updateAllHighlights() {
-    document.querySelectorAll('.edit-layer').forEach(editor => {
-        updateHighlight(editor.id, editor.dataset.type);
-    });
-}
-
-function highlightHTML(code) {
-    // Escape HTML first
-    let escaped = code
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-    
-    // Comments
-    escaped = escaped.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="syntax-comment">$1</span>');
-    
-    // Doctype
-    escaped = escaped.replace(/(&lt;!DOCTYPE[^&]*&gt;)/gi, '<span class="syntax-keyword">$1</span>');
-    
-    // Tags
-    escaped = escaped.replace(/(&lt;\/?)([\w-]+)/g, '$1<span class="syntax-tag">$2</span>');
-    
-    // Attributes
-    escaped = escaped.replace(/\s([\w-]+)(=)/g, ' <span class="syntax-attr">$1</span>$2');
-    
-    // Attribute values
-    escaped = escaped.replace(/(=)(&quot;|")([^&]*?)($2)/g, '$1<span class="syntax-value">$3</span>');
-    
-    return escaped;
-}
-
-function highlightCSS(code) {
-    let escaped = code
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-    
-    // Comments
-    escaped = escaped.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="syntax-comment">$1</span>');
-    
-    // Selectors (before {)
-    escaped = escaped.replace(/^([^{]+)(\{)/gm, '<span class="syntax-selector">$1</span>$2');
-    
-    // Properties
-    escaped = escaped.replace(/([\w-]+)(\s*:)/g, '<span class="syntax-property">$1</span>$2');
-    
-    // Values (after : until ; or })
-    escaped = escaped.replace(/:([^;{}]+)/g, ':<span class="syntax-value">$1</span>');
-    
-    // Numbers
-    escaped = escaped.replace(/(:\s*)(-?\d+(\.\d+)?(px|em|rem|%|vh|vw|s|ms)?)/g, '$1<span class="syntax-number">$2</span>');
-    
-    // Colors (hex)
-    escaped = escaped.replace(/(#[0-9a-fA-F]{3,8})/g, '<span class="syntax-number">$1</span>');
-    
-    return escaped;
-}
-
-function highlightJS(code) {
-    let escaped = code
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-    
-    // Comments
-    escaped = escaped.replace(/(\/\/[^\n]*)/g, '<span class="syntax-comment">$1</span>');
-    escaped = escaped.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="syntax-comment">$1</span>');
-    
-    // Strings
-    escaped = escaped.replace(/(&quot;[^&]*?&quot;)/g, '<span class="syntax-string">$1</span>');
-    escaped = escaped.replace(/(&#39;[^&]*?&#39;)/g, '<span class="syntax-string">$1</span>');
-    escaped = escaped.replace(/(`[^`]*?`)/g, '<span class="syntax-string">$1</span>');
-    
-    // Keywords
-    const keywords = ['const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 'do', 'switch', 'case', 'break', 'continue', 'default', 'try', 'catch', 'finally', 'throw', 'new', 'this', 'class', 'extends', 'super', 'import', 'export', 'from', 'as', 'async', 'await', 'yield', 'static', 'get', 'set', 'of', 'in', 'typeof', 'instanceof', 'delete', 'void', 'null', 'undefined', 'true', 'false', 'NaN', 'Infinity'];
-    keywords.forEach(kw => {
-        const regex = new RegExp(`\\b(${kw})\\b`, 'g');
-        escaped = escaped.replace(regex, '<span class="syntax-keyword">$1</span>');
-    });
-    
-    // Functions
-    escaped = escaped.replace(/([\w.]+)\s*\(/g, '<span class="syntax-function">$1</span>(');
-    
-    // Numbers
-    escaped = escaped.replace(/\b(\d+(\.\d+)?)\b/g, '<span class="syntax-number">$1</span>');
-    
-    return escaped;
-}
-
-// ==========================================
-// LINE NUMBERS
-// ==========================================
-
-function updateLineNumbers() {
-    Object.keys(AppState.files).forEach(name => {
-        updateLineNumbersFor(name.replace('.', '-'));
-    });
-}
-
-function updateLineNumbersFor(editorId) {
-    const linesEl = document.getElementById('lines-' + editorId);
-    const editorEl = document.getElementById('edit-' + editorId);
-    
-    if (!linesEl || !editorEl) return;
-    
-    const lines = editorEl.textContent.split('\n').length;
-    let lineNumbers = '';
-    
-    for (let i = 1; i <= lines; i++) {
-        lineNumbers += i + '\n';
-    }
-    
-    linesEl.textContent = lineNumbers;
-}
-
-// ==========================================
-// FILE MANAGEMENT
-// ==========================================
-
-function switchToFile(fileName) {
-    AppState.activeFile = fileName;
-    
-    // Update file list
-    renderFileList();
-    
-    // Update tabs
-    renderFileTabs();
-    
-    // Focus editor
-    const editorEl = document.getElementById('edit-' + fileName.replace('.', '-'));
-    if (editorEl) {
-        editorEl.focus();
-    }
-    
-    // Close sidebar on mobile
-    if (window.innerWidth < 768) {
-        toggleSidebar();
-    }
-}
-
-function addNewFile() {
-    const fileName = prompt('Enter file name (e.g., utils.js):');
-    
-    if (!fileName) return;
-    
-    if (AppState.files[fileName]) {
-        alert('File already exists!');
-        return;
-    }
-    
-    const ext = fileName.split('.').pop().toLowerCase();
-    const typeMap = { html: 'html', css: 'css', js: 'js' };
-    
-    if (!typeMap[ext]) {
-        alert('Unsupported file type. Use .html, .css, or .js');
-        return;
-    }
-    
-    const templates = {
-        html: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${fileName}</title>
-</head>
-<body>
-    
-</body>
-</html>`,
-        css: `/* ${fileName} */\n`,
-        js: `// ${fileName}\n`
-    };
-    
-    AppState.files[fileName] = {
-        type: typeMap[ext],
-        content: templates[typeMap[ext]],
-        visible: true
-    };
-    
-    renderFileList();
-    renderFileTabs();
-    renderEditors();
-    switchToFile(fileName);
-    saveToLocalStorage();
-}
-
-function deleteFile(fileName) {
-    if (Object.keys(AppState.files).length <= 1) {
-        alert('Cannot delete the last file!');
-        return;
-    }
-    
-    if (!confirm(`Delete ${fileName}?`)) return;
-    
-    delete AppState.files[fileName];
-    
-    if (AppState.activeFile === fileName) {
-        AppState.activeFile = Object.keys(AppState.files)[0];
-    }
-    
-    renderFileList();
-    renderFileTabs();
-    renderEditors();
-    saveToLocalStorage();
-}
-
-// ==========================================
-// PANEL CONTROLS
-// ==========================================
-
-function togglePanelCollapse(panelId) {
-    const panel = document.getElementById('panel-' + panelId);
-    if (panel) {
-        panel.classList.toggle('collapsed');
-    }
-}
-
-function expandPanel(panelId) {
-    const panel = document.getElementById('panel-' + panelId);
-    if (panel) {
-        panel.classList.remove('collapsed');
-    }
-}
-
-// ==========================================
-// PREVIEW
-// ==========================================
-
-function runCode() {
-    const overlay = document.getElementById('preview-overlay');
-    const frame = document.getElementById('preview-frame');
-    
-    // Build combined HTML
-    let html = AppState.files['index.html']?.content || '<html><body></body></html>';
-    const css = AppState.files['style.css']?.content || '';
-    const js = AppState.files['script.js']?.content || '';
-    
-    // Inject CSS
-    html = html.replace('</head>', `<style>${css}</style></head>`);
-    
-    // Inject JS
-    html = html.replace('</body>', `<script>${js}<\/script></body>`);
-    
-    // Set iframe content
-    frame.srcdoc = html;
-    
-    // Show overlay
-    overlay.classList.add('open');
-    
-    // Log to console
-    addConsoleLog('Running preview...', 'info');
-}
-
-function closePreview() {
-    const overlay = document.getElementById('preview-overlay');
-    overlay.classList.remove('open');
-}
-
-function refreshPreview() {
-    runCode();
-    addConsoleLog('Preview refreshed', 'info');
-}
-
-function setPreviewDevice(device) {
-    const frame = document.getElementById('preview-frame');
-    const btnDesktop = document.getElementById('btn-desktop');
-    const btnMobile = document.getElementById('btn-mobile');
-    
-    if (device === 'mobile') {
-        frame.classList.add('mobile');
-        btnMobile.classList.add('active');
-        btnDesktop.classList.remove('active');
-    } else {
-        frame.classList.remove('mobile');
-        btnDesktop.classList.add('active');
-        btnMobile.classList.remove('active');
-    }
-}
-
-// ==========================================
-// CONSOLE
-// ==========================================
-
-function toggleConsole() {
-    const consolePanel = document.getElementById('console-panel');
-    consolePanel.classList.toggle('open');
-}
-
-function addConsoleLog(message, type = 'log') {
-    const consoleContent = document.getElementById('console-content');
-    const log = document.createElement('div');
-    log.className = `console-log ${type}`;
-    log.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-    consoleContent.appendChild(log);
-    consoleContent.scrollTop = consoleContent.scrollHeight;
-    
-    AppState.consoleLogs.push({ message, type, time: Date.now() });
-}
-
-function clearConsole() {
-    const consoleContent = document.getElementById('console-content');
-    consoleContent.innerHTML = '';
-    AppState.consoleLogs = [];
-}
-
-// ==========================================
-// SIDEBAR
-// ==========================================
-
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('open');
-}
-
-function toggleShutter() {
-    toggleSidebar();
-}
-
-// ==========================================
-// SETTINGS
-// ==========================================
-
-function toggleSettings() {
-    const panel = document.getElementById('settings-panel');
-    panel.classList.toggle('open');
-}
-
-function loadSettings() {
-    const s = AppState.settings;
-    
-    document.getElementById('setting-theme').value = s.theme;
-    document.getElementById('setting-font').value = s.fontFamily;
-    document.getElementById('setting-font-size').value = s.fontSize;
-    document.getElementById('font-size-display').textContent = s.fontSize + 'px';
-    document.getElementById('setting-tab-size').value = s.tabSize;
-    document.getElementById('setting-line-numbers').checked = s.lineNumbers;
-    document.getElementById('setting-suggestions').checked = s.suggestions;
-    document.getElementById('setting-auto-brackets').checked = s.autoBrackets;
-    document.getElementById('setting-auto-save').checked = s.autoSave;
-    document.getElementById('setting-accent').value = s.accentColor;
-    
-    applyTheme(s.theme);
-    applyFont(s.fontFamily, s.fontSize);
-    updateLineNumbersVisibility();
-}
-
-function updateSettings() {
-    const s = AppState.settings;
-    
-    s.theme = document.getElementById('setting-theme').value;
-    s.fontFamily = document.getElementById('setting-font').value;
-    s.fontSize = parseInt(document.getElementById('setting-font-size').value);
-    s.tabSize = parseInt(document.getElementById('setting-tab-size').value);
-    s.lineNumbers = document.getElementById('setting-line-numbers').checked;
-    s.suggestions = document.getElementById('setting-suggestions').checked;
-    s.autoBrackets = document.getElementById('setting-auto-brackets').checked;
-    s.autoSave = document.getElementById('setting-auto-save').checked;
-    s.accentColor = document.getElementById('setting-accent').value;
-    
-    document.getElementById('font-size-display').textContent = s.fontSize + 'px';
-    
-    applyTheme(s.theme);
-    applyFont(s.fontFamily, s.fontSize);
-    updateLineNumbersVisibility();
-    saveToLocalStorage();
-}
-
-function saveAndCloseSettings() {
-    updateSettings();
-    toggleSettings();
-}
-
-function resetSettings() {
-    if (confirm('Reset all settings to default?')) {
-        localStorage.removeItem('craby_settings');
-        AppState.settings = {
-            theme: 'dark',
-            fontFamily: "'Fira Code', monospace",
-            fontSize: 14,
-            tabSize: 2,
-            lineNumbers: true,
-            suggestions: true,
-            autoBrackets: true,
-            autoSave: true,
-            accentColor: '#ffb400'
-        };
-        loadSettings();
-    }
-}
-
-function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    document.documentElement.style.setProperty('--accent', AppState.settings.accentColor);
-}
-
-function applyFont(fontFamily, fontSize) {
-    document.querySelectorAll('.edit-layer, .highlight-layer').forEach(el => {
-        el.style.fontFamily = fontFamily;
-        el.style.fontSize = fontSize + 'px';
-    });
-}
-
-function updateLineNumbersVisibility() {
-    document.querySelectorAll('.line-numbers').forEach(el => {
-        el.style.display = AppState.settings.lineNumbers ? 'block' : 'none';
-    });
-}
-
-// ==========================================
-// CODE FORMATTING (BEAUTIFY)
-// ==========================================
-
-function beautifyCode() {
-    Object.entries(AppState.files).forEach(([name, data]) => {
-        let formatted = data.content;
-        
-        switch (data.type) {
-            case 'html':
-                formatted = beautifyHTML(formatted);
-                break;
-            case 'css':
-                formatted = beautifyCSS(formatted);
-                break;
-            case 'js':
-                formatted = beautifyJS(formatted);
-                break;
-        }
-        
-        AppState.files[name].content = formatted;
-    });
-    
-    renderEditors();
-    addConsoleLog('Code beautified!', 'info');
-    saveToLocalStorage();
-}
-
-function beautifyHTML(html) {
-    let formatted = '';
-    let indent = 0;
-    
-    // First pass: normalize whitespace
-    html = html.replace(/>\s+</g, '><').trim();
-    
-    // Second pass: add newlines and indent
-    const tokens = html.split(/(<[^>]+>)/);
-    
-    tokens.forEach(token => {
-        if (!token.trim()) return;
-        
-        if (token.match(/^<\/\w/)) {
-            // Closing tag
-            indent--;
-        }
-        
-        formatted += '  '.repeat(Math.max(0, indent)) + token.trim() + '\n';
-        
-        if (token.match(/^<\w[^>]*[^\/]>$/)) {
-            // Opening tag (not self-closing)
-            indent++;
-        }
-    });
-    
-    return formatted.trim();
-}
-
-function beautifyCSS(css) {
-    // Add newlines after {
-    css = css.replace(/\s*{\s*/g, ' {\n  ');
-    
-    // Add newlines before }
-    css = css.replace(/\s*}\s*/g, '\n}\n\n');
-    
-    // Add newlines after ;
-    css = css.replace(/;\s*/g, ';\n  ');
-    
-    // Clean up extra whitespace
-    css = css.replace(/\n\s*\n/g, '\n');
-    
-    // Trim each line
-    css = css.split('\n').map(line => line.trim()).join('\n');
-    
-    return css.trim() + '\n';
-}
-
-function beautifyJS(js) {
-    // Add spaces around operators
-    js = js.replace(/\s*([{};,:])\s*/g, '$1 ');
-    js = js.replace(/\s*([=+\-*\/<>!&|%^~?])\s*/g, ' $1 ');
-    
-    // Add newlines after {
-    js = js.replace(/\s*{\s*/g, ' {\n  ');
-    
-    // Add newlines before }
-    js = js.replace(/\s*}\s*/g, '\n}\n');
-    
-    // Add newlines after ;
-    js = js.replace(/;\s*/g, ';\n');
-    
-    // Clean up extra whitespace
-    js = js.replace(/\n\s*\n/g, '\n');
-    
-    // Trim each line
-    js = js.split('\n').map(line => line.trim()).filter(line => line).join('\n');
-    
-    return js.trim() + '\n';
-}
-
-// ==========================================
-// DOWNLOAD
-// ==========================================
-
-function downloadAll() {
-    Object.entries(AppState.files).forEach(([name, data]) => {
-        downloadFile(name, data.content);
-    });
-    addConsoleLog('All files downloaded!', 'info');
-}
-
-function downloadFile(fileName, content) {
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-// ==========================================
-// SUGGESTIONS
-// ==========================================
-
-let suggestionIndex = 0;
-let currentSuggestions = [];
-
-function showSuggestions(editor, query) {
-    if (!AppState.settings.suggestions) return;
-    
-    const type = editor.dataset.type;
-    const dict = Dictionary[type] || [];
-    const matches = dict.filter(item => item.toLowerCase().startsWith(query.toLowerCase()));
-    
-    if (matches.length === 0) {
-        hideSuggestions();
-        return;
-    }
-    
-    currentSuggestions = matches;
-    suggestionIndex = 0;
-    
-    const box = document.getElementById('suggestions-box');
-    const list = document.getElementById('suggestions-list');
-    
-    list.innerHTML = matches.map((item, i) => `
-        <div class="suggestion-item ${i === 0 ? 'selected' : ''}" 
-             onclick="insertSuggestion('${item}')"
-             onmouseenter="selectSuggestion(${i})">
-            ${item}
-        </div>
-    `).join('');
-    
-    // Position box
-    const rect = editor.getBoundingClientRect();
-    box.style.top = (rect.bottom + 5) + 'px';
-    box.style.left = rect.left + 'px';
-    box.classList.add('open');
-}
-
-function hideSuggestions() {
-    document.getElementById('suggestions-box').classList.remove('open');
-}
-
-function selectSuggestion(index) {
-    suggestionIndex = index;
-    document.querySelectorAll('.suggestion-item').forEach((item, i) => {
-        item.classList.toggle('selected', i === index);
-    });
-}
-
-function insertSuggestion(text) {
-    const editor = document.querySelector('.edit-layer:focus');
-    if (!editor) return;
-    
-    const selection = window.getSelection();
-    const range = selection.getRangeAt(0);
-    
-    // Replace current word
-    const textContent = editor.textContent;
-    const cursorPos = range.startOffset;
-    
-    // Find word start
-    let wordStart = cursorPos;
-    while (wordStart > 0 && !/\s/.test(textContent[cursorPos - (cursorPos - wordStart)])) {
-        wordStart--;
-        if (wordStart === 0) break;
-    }
-    
-    // Find word end
-    let wordEnd = cursorPos;
-    while (wordEnd < textContent.length && !/\s/.test(textContent[wordEnd])) {
-        wordEnd++;
-    }
-    
-    // Replace word
-    editor.textContent = textContent.substring(0, wordStart) + text + textContent.substring(wordEnd);
-    
-    // Update state
-    AppState.files[editor.dataset.file].content = editor.textContent;
-    
-    // Move cursor
-    range.setStart(editor.firstChild, wordStart + text.length);
-    range.collapse(true);
-    selection.removeAllRanges();
-    selection.addRange(range);
-    
-    updateHighlight(editor.id, editor.dataset.type);
-    hideSuggestions();
-}
-
-// ==========================================
-// UTILITY FUNCTIONS
-// ==========================================
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function setupEventListeners() {
-    // Global keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        // Ctrl/Cmd + S = Save
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-            e.preventDefault();
-            saveToLocalStorage();
-            addConsoleLog('Saved to local storage', 'info');
-        }
-        
-        // Ctrl/Cmd + Enter = Run
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            e.preventDefault();
-            runCode();
-        }
-        
-        // Escape = Close panels
-        if (e.key === 'Escape') {
-            closePreview();
-            hideSuggestions();
-            const settingsPanel = document.getElementById('settings-panel');
-            if (settingsPanel.classList.contains('open')) {
-                settingsPanel.classList.remove('open');
-            }
-        }
-    });
-    
-    // Hide suggestions on click outside
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.suggestions-box') && !e.target.closest('.edit-layer')) {
-            hideSuggestions();
-        }
-    });
-    
-    // Touch swipe for sidebar (mobile)
-    let touchStartX = 0;
-    let touchEndX = 0;
-    
-    document.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-    });
-    
-    document.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    });
-    
-    function handleSwipe() {
-        const swipeDistance = touchEndX - touchStartX;
-        const sidebar = document.getElementById('sidebar');
-        
-        if (swipeDistance > 100 && touchStartX < 50) {
-            // Swipe right from left edge - open sidebar
-            sidebar.classList.add('open');
-            document.getElementById('sidebar-overlay').classList.add('open');
-        } else if (swipeDistance < -100) {
-            // Swipe left - close sidebar
-            sidebar.classList.remove('open');
-            document.getElementById('sidebar-overlay').classList.remove('open');
-        }
-    }
-    
-    // Window resize
-    window.addEventListener('resize', () => {
-        if (window.innerWidth >= 768) {
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('sidebar-overlay').classList.remove('open');
-        }
-    });
-}
-
-// ==========================================
-// INTERCEPT CONSOLE LOGS IN PREVIEW
-// ==========================================
-
-(function() {
-    const originalConsole = { ...console };
-    
-    ['log', 'error', 'warn', 'info'].forEach(method => {
-        console[method] = (...args) => {
-            originalConsole[method](...args);
-            const message = args.map(arg => 
-                typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-            ).join(' ');
-            addConsoleLog(`[${method.toUpperCase()}] ${message}`, method === 'error' ? 'error' : method === 'warn' ? 'warn' : 'log');
-        };
-    });
-})();
-
-// Make addConsoleLog globally available
-window.addConsoleLog = addConsoleLog;</script>
-</body>
-</html>
