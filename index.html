@@ -4,119 +4,130 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Craby Lab - Online Code Editor</title>
+<title>Craby Editor - Free Online HTML Editor</title>
+
+<meta name="description" content="Craby Editor is a powerful free online HTML, CSS, and JavaScript editor with live preview.">
 
 <!-- Favicon -->
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link href="style.css">
-  <link src="style.css">
+<link rel="manifest" href="/site.webmanifest">
+
 <style>
 :root{
-  --bg:#0d1117;
-  --panel:#161b22;
-  --accent:#ffb400;
-  --text:#c9d1d9;
+    --bg:#0d1117;
+    --panel:#161b22;
+    --accent:#ffb400;
+    --text:#c9d1d9;
 }
 
 body{
-  margin:0;
-  font-family: Arial, sans-serif;
-  background:var(--bg);
-  color:var(--text);
+    margin:0;
+    font-family:sans-serif;
+    background:var(--bg);
+    color:var(--text);
 }
 
 /* TOPBAR */
 .topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:12px 20px;
-  background:#010409;
-  border-bottom:2px solid var(--accent);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 20px;
+    background:#010409;
+    border-bottom:2px solid var(--accent);
 }
 
 .logo{
-  display:flex;
-  align-items:center;
-  gap:10px;
+    display:flex;
+    align-items:center;
+    gap:10px;
 }
 
 .logo img{
-  height:35px;
+    height:35px;
+}
+
+.logo span{
+    color:var(--accent);
+    font-weight:bold;
 }
 
 .nav{
-  display:flex;
-  gap:20px;
+    display:flex;
+    gap:20px;
 }
 
 .nav a{
-  color:white;
-  text-decoration:none;
-  font-size:14px;
-}
-
-.nav a:hover{
-  color:var(--accent);
+    color:white;
+    text-decoration:none;
+    font-size:14px;
 }
 
 /* HERO */
 .hero{
-  text-align:center;
-  padding:80px 20px;
+    text-align:center;
+    padding:60px 20px;
 }
 
 .hero h1{
-  font-size:40px;
-  color:var(--accent);
+    font-size:40px;
+    color:var(--accent);
 }
 
 .hero p{
-  max-width:500px;
-  margin:10px auto;
-  opacity:0.8;
+    max-width:600px;
+    margin:auto;
+    margin-top:10px;
 }
 
 .btn{
-  margin-top:20px;
-  padding:12px 20px;
-  background:var(--accent);
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:bold;
+    margin-top:25px;
+    padding:12px 25px;
+    background:var(--accent);
+    color:black;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
 }
 
-.btn:hover{
-  background:white;
+/* INFO SECTION */
+.section{
+    padding:40px 20px;
 }
 
-/* FEATURES */
-.features{
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  gap:20px;
-  padding:40px 20px;
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:20px;
 }
 
 .card{
-  background:var(--panel);
-  padding:20px;
-  border-radius:10px;
-  width:250px;
-  text-align:center;
-  border:1px solid rgba(255,255,255,0.1);
+    background:var(--panel);
+    padding:20px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.1);
+}
+
+/* TAG BOX */
+.code-box{
+    background:black;
+    padding:15px;
+    border-radius:8px;
+    color:#00ffcc;
+    font-family:monospace;
+    margin-top:10px;
 }
 
 /* FOOTER */
 .footer{
-  text-align:center;
-  padding:20px;
-  border-top:1px solid rgba(255,255,255,0.1);
-  margin-top:40px;
+    text-align:center;
+    padding:20px;
+    background:#010409;
+    border-top:1px solid var(--accent);
+    margin-top:40px;
 }
 </style>
 </head>
@@ -125,207 +136,81 @@ body{
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="logo">
-    <img src="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png">
-    <b>Craby Lab</b>
-  </div>
-
-  <div class="nav">
-    <a href="#">Home</a>
-    <a href="editor.html">Editor</a>
-    <a href="#">Docs</a>
-    <a href="#">About</a>
-  </div>
-</div>
- <div class="321">
-  
-<img src="Logo.png"
-style="
-width:110px;
-height:auto;
-margin-bottom:20px;
-filter:drop-shadow(0 0 20px var(--accent));
-animation:premiumFloat 2s ease-in-out infinite;
-">
-
-<div style="
-font-size:30px;
-font-weight:900;
-color:var(--accent);
-font-family:'Plus Jakarta Sans',sans-serif;
-margin-bottom:12px;
-letter-spacing:2px;
-transform:scale(1);
-animation:pctPop 1s ease;
-">
-<span id="load-val">0</span>%
-</div>
-
-<div style="
-width:100%;
-height:8px;
-background:rgba(255,255,255,0.05);
-border-radius:20px;
-overflow:hidden;
-border:1px solid var(--border);
-">
-
-<div id="bar-fill"
-style="
-height:100%;
-width:0%;
-background:linear-gradient(90deg,var(--accent),#00eaff,var(--accent));
-background-size:200% 100%;
-box-shadow:0 0 20px var(--accent);
-transition:width 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
-">
-</div>
-
-</div>
-</div>
-</div>
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TTVQBL6S"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <header>
-    <div class="logo-container">
-        <img src="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png" alt="Logo">
-    </div>
-    <div class="header-actions">
-        <button class="icon-btn" onclick="beautifyCode()" title="Format Code"><i class="fas fa-magic"></i></button>
-        <button class="icon-btn" onclick="exportCode()" title="Download Project"><i class="fas fa-download"></i></button>
-        <button id="run-btn" class="icon-btn run-btn" onclick="runCode()"><i class="fas fa-play"></i> RUN</button>
-        <button class="icon-btn" onclick="toggleSettings()" title="Settings"><i class="fas fa-sliders-h"></i></button>
-    </div>
-</header>
-
-<div id="shutter-trigger" onclick="toggleShutter()">
-    <i class="fas fa-chevron-right"></i>
-</div>
-
-<main class="main-container">
-    <div id="editor-grid" class="editor-grid"></div>
-</main>
-
-<div id="shutter" class="shutter">
-    <div class="shutter-header">
-        <h3 style="color: var(--accent);">TASKBAR</h3>
-         <div id="taskbar-files"></div>
-        <i class="fas fa-times" onclick="toggleShutter()" style="cursor: pointer; color: white;"></i>
-    </div>
-    <div class="shutter-list">
-        <button class="add-btn" onclick="addNewFilePrompt()"><i class="fas fa-plus"></i> NEW FILE</button>
-        <div id="shutter-file-list"></div>
-    </div>
-</div>
-
-<div id="settingsPanel" class="settings-panel">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="color: var(--accent);">IDE Settings</h3>
-        <i class="fas fa-times" onclick="toggleSettings()" style="cursor: pointer; color: #ff4d4d;"></i>
+    <div class="logo">
+        <img src="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png">
+        <span>Craby Editor</span>
     </div>
 
-    <div class="s-group">
-        <label>Show/Hide Editors</label>
-        <div class="checkbox-group">
-            <label><input type="checkbox" id="chk-html" checked onchange="updateVisibility()"> HTML</label>
-            <label><input type="checkbox" id="chk-css" checked onchange="updateVisibility()"> CSS</label>
-            <label><input type="checkbox" id="chk-js" checked onchange="updateVisibility()"> JS</label>
-        </div>
-    </div>
-
-    <div class="s-group">
-        <label>Font Family</label>
-        <select id="font-family-sel" onchange="updateThemeAndFont()">
-            <option value="'Fira Code', monospace">Fira Code</option>
-            <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
-            <option value="'Source Code Pro', monospace">Source Code Pro</option>
-            <option value="'Roboto Mono', monospace">Roboto Mono</option>
-            <option value="'Ubuntu Mono', monospace">Ubuntu Mono</option>
-            <option value="'Courier New', monospace">Courier New</option>
-        </select>
-    </div>
-
-    <div class="s-group">
-        <label>Font Size: <span id="font-size-val">14px</span></label>
-        <input type="range" id="font-size-range" min="5" max="50" value="14" oninput="updateFontSize(this.value)">
-    </div>
-
-    <div class="s-group">
-        <label>Editor Theme</label>
-        <select id="theme-sel" onchange="updateThemeAndFont()">
-            <option value="dark">Github Dark</option>
-            <option value="monokai">Monokai Pro</option>
-            <option value="dracula">Dracula</option>
-            <option value="cyberpunk">Cyberpunk Neon</option>
-            <option value="matrix">Matrix Green</option>
-            <option value="nord">Nordic Blue</option>
-            <option value="midnight">Midnight Deep</option>
-            <option value="solarized">Solarized Dark</option>
-            <option value="oceanic">Oceanic Blue</option>
-            <option value="evergreen">Evergreen Forest</option>
-            <option value="midnight_purple">Midnight Purple</option>
-            <option value="light">Simple Light</option>
-        </select>
-    </div>
-
-    <button class="add-btn" onclick="toggleSettings()" style="margin-top: 10px;">SAVE & CLOSE</button>
-</div>
-
-<div id="preview-overlay" class="preview-overlay">
-    <div class="overlay-header">
-        <div class="logo-container">
-            <img src="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png" alt="Craby Logo" height="30">
-        </div>
-    <div style="display: flex; gap: 10px;">
-    <button class="icon-btn" onclick="refreshPreview()"><i class="fas fa-sync-alt"></i></button>
-    
-    <button class="icon-btn" onclick="setPreviewSize('100%')"><i class="fas fa-desktop"></i></button>
-    <button class="icon-btn" onclick="setPreviewSize('375px')"><i class="fas fa-mobile-alt"></i></button>
-    <button onclick="closePreview()" class="icon-btn">CLOSE</button>
-</div>
-  </div>
-    <div id="preview-body" style="flex:1; display:flex; justify-content:center; align-items:center; background:#1e1e1e;">
-        <iframe id="output-frame" style="width:100%; height:100%; background:white; transition: 0.3s ease;"></iframe>
+    <div class="nav">
+        <a href="#">Home</a>
+        <a href="#features">Features</a>
+        <a href="#tags">HTML Tags</a>
     </div>
 </div>
-<script src="1.js"></script>
- </div>
 
 <!-- HERO -->
-<section class="hero">
-  <h1>Craby Lab</h1>
-  <p>Write HTML, CSS, and JavaScript code instantly with live preview. Fast, free and powerful online editor.</p>
-  
-  <button class="btn" onclick="openEditor()">Start Coding</button>
-</section>
+<div class="hero">
+    <h1>Build Code Faster 🚀</h1>
+    <p>Craby Editor is a powerful online HTML, CSS, and JavaScript editor with instant live preview.</p>
+
+    <button class="btn" onclick="openEditor()">Open Editor</button>
+</div>
 
 <!-- FEATURES -->
-<section class="features">
-  <div class="card">
-    <h3>⚡ Live Preview</h3>
-    <p>See your code output instantly.</p>
-  </div>
+<div class="section" id="features">
+    <h2>✨ Features</h2>
+    <div class="cards">
+        <div class="card">
+            <h3>Live Preview</h3>
+            <p>See your code output instantly.</p>
+        </div>
 
-  <div class="card">
-    <h3>🎨 Smart Editor</h3>
-    <p>Syntax highlight and auto suggestions.</p>
-  </div>
+        <div class="card">
+            <h3>Multi File Support</h3>
+            <p>Work with HTML, CSS & JS files.</p>
+        </div>
 
-  <div class="card">
-    <h3>📱 Mobile Friendly</h3>
-    <p>Code from anywhere on any device.</p>
-  </div>
-</section>
+        <div class="card">
+            <h3>Fast & Lightweight</h3>
+            <p>Runs directly in your browser.</p>
+        </div>
+    </div>
+</div>
+
+<!-- HTML TAGS INFO -->
+<div class="section" id="tags">
+    <h2>📘 Basic HTML Tags</h2>
+
+    <div class="card">
+        <p>Example of a simple HTML structure:</p>
+
+        <div class="code-box">
+&lt;html&gt;<br>
+&nbsp;&nbsp;&lt;body&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;h1&gt;Hello World&lt;/h1&gt;<br>
+&nbsp;&nbsp;&lt;/body&gt;<br>
+&lt;/html&gt;
+        </div>
+
+        <p><b>Common Tags:</b></p>
+        <ul>
+            <li>&lt;h1&gt; → Heading</li>
+            <li>&lt;p&gt; → Paragraph</li>
+            <li>&lt;a&gt; → Link</li>
+            <li>&lt;img&gt; → Image</li>
+        </ul>
+    </div>
+</div>
 
 <!-- FOOTER -->
 <div class="footer">
-  <p>Craby Lab is a free online code editor for developers.</p>
-  <p>© 2026 Craby Lab</p>
+    <p>Craby Editor - Free Online Code Editor</p>
+    <p>© 2026 Craby Editor</p>
 </div>
 
 <script>
 function openEditor(){
-  window.location.href = "editor.html";
+    window.location.href = "https://craby-editor.vercel.app/";
 }
 </script>
 
