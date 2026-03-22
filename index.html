@@ -1,1517 +1,332 @@
-<!doctype html>
-<html lang="en" class="h-full">
- <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Craby Editor – Online HTML, CSS &amp; JS IDE</title><!-- SEO -->
-  <meta name="description" content="Craby Editor is a powerful online HTML, CSS, and JavaScript editor with live preview, syntax highlighting, and smart coding features.">
-  <meta name="keywords" content="online code editor, HTML editor, CSS editor, JavaScript IDE, live preview, Craby Editor">
-  <meta name="author" content="Craby Editor">
-  <meta name="robots" content="index, follow"><!-- Open Graph -->
-  <meta property="og:title" content="Craby Editor – Online HTML, CSS &amp; JS IDE">
-  <meta property="og:description" content="A powerful online HTML, CSS, and JavaScript editor with live preview and syntax highlighting.">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png"><!-- Favicon -->
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="manifest" href="/site.webmanifest"><!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&amp;family=Syne:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"><!-- Tailwind + Lucide -->
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script><!-- Element SDK -->
-  <script src="/_sdk/element_sdk.js"></script>
-  <style>
-    :root {
-      --bg: #0d1117;
-      --surface: #161b22;
-      --surface2: #1c2230;
-      --border: #30363d;
-      --accent: #ffb400;
-      --accent2: #ff6b35;
-      --text: #e6edf3;
-      --text-muted: #8b949e;
-      --html: #ff7b72;
-      --css: #79c0ff;
-      --js: #d2a8ff;
-      --green: #56d364;
-      --glow: rgba(255, 180, 0, 0.15);
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Syne', sans-serif;
-      overflow: hidden;
-    }
-
-    .app-root { display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden; }
-
-    /* ── TOPBAR ── */
-    .topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 16px;
-      height: 52px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-      z-index: 100;
-      position: relative;
-    }
-    .topbar::after {
-      content: '';
-      position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-      opacity: 0.5;
-    }
-    .logo-area { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-    .logo-img { width: 32px; height: 32px; object-fit: contain; }
-    .logo-title {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800; font-size: 17px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      letter-spacing: -0.3px;
-    }
-
-    .top-nav { display: flex; gap: 2px; }
-    .top-nav-btn {
-      background: none; border: none; cursor: pointer;
-      color: var(--text-muted); font-family: 'Syne', sans-serif;
-      font-size: 13px; font-weight: 500;
-      padding: 6px 12px; border-radius: 6px;
-      transition: all 0.2s;
-    }
-    .top-nav-btn:hover, .top-nav-btn.active { color: var(--text); background: var(--surface2); }
-    .top-nav-btn.active { color: var(--accent); }
-
-    .top-actions { display: flex; gap: 8px; align-items: center; }
-    .top-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 6px 12px; border-radius: 7px; border: none; cursor: pointer;
-      font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
-      transition: all 0.2s; letter-spacing: 0.3px;
-    }
-    .btn-run {
-      background: var(--accent); color: #0d1117;
-      box-shadow: 0 0 16px rgba(255,180,0,0.3);
-    }
-    .btn-run:hover { background: #ffc61a; box-shadow: 0 0 24px rgba(255,180,0,0.5); transform: translateY(-1px); }
-    .btn-secondary {
-      background: var(--surface2); color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
-
-    /* ── MAIN LAYOUT ── */
-    .main-layout {
-      display: flex; flex: 1; overflow: hidden;
-    }
-
-    /* ── SIDEBAR ── */
-    .sidebar {
-      width: 220px; flex-shrink: 0;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      transition: width 0.3s ease;
-      overflow: hidden;
-    }
-    .sidebar.collapsed { width: 0; }
-    .sidebar-header {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .sidebar-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-    .sidebar-add {
-      background: none; border: none; cursor: pointer;
-      color: var(--text-muted); padding: 3px; border-radius: 4px;
-      transition: all 0.2s; display: flex; align-items: center;
-    }
-    .sidebar-add:hover { color: var(--accent); background: var(--surface2); }
-
-    .file-list { flex: 1; overflow-y: auto; padding: 8px; }
-    .file-item {
-      display: flex; align-items: center; gap: 8px;
-      padding: 7px 10px; border-radius: 6px; cursor: pointer;
-      font-family: 'JetBrains Mono', monospace; font-size: 12px;
-      color: var(--text-muted); transition: all 0.15s;
-      border: 1px solid transparent;
-    }
-    .file-item:hover { color: var(--text); background: var(--surface2); }
-    .file-item.active {
-      color: var(--text);
-      background: rgba(255,180,0,0.08);
-      border-color: rgba(255,180,0,0.2);
-    }
-    .file-dot {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-    }
-    .dot-html { background: var(--html); }
-    .dot-css { background: var(--css); }
-    .dot-js { background: var(--js); }
-
-    /* ── EDITOR AREA ── */
-    .editor-area {
-      flex: 1; display: flex; flex-direction: column;
-      overflow: hidden; background: var(--bg);
-    }
-
-    .editors-container {
-      flex: 1; display: flex; gap: 0;
-      overflow: hidden;
-    }
-
-    /* ── EDITOR PANEL ── */
-    .editor-panel {
-      flex: 1; display: flex; flex-direction: column;
-      border-right: 1px solid var(--border);
-      background: var(--surface);
-      transition: all 0.3s ease;
-      overflow: hidden;
-      min-width: 0;
-    }
-    .editor-panel:last-child { border-right: none; }
-    .editor-panel.minimized { flex: 0 0 0px; overflow: hidden; border-right: 0; }
-    .editor-panel.fullscreen {
-      position: fixed; inset: 52px 0 0 0; z-index: 200;
-      border: none; border-radius: 0;
-    }
-
-    .panel-titlebar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 12px; height: 38px;
-      background: var(--surface2);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .panel-title-left { display: flex; align-items: center; gap: 8px; }
-    .panel-lang-badge {
-      width: 8px; height: 8px; border-radius: 50%;
-    }
-    .panel-filename {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px; font-weight: 500; color: var(--text);
-    }
-    .panel-controls { display: flex; gap: 4px; }
-    .panel-ctrl-btn {
-      width: 26px; height: 26px; border-radius: 5px;
-      background: none; border: none; cursor: pointer;
-      color: var(--text-muted);
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s;
-    }
-    .panel-ctrl-btn:hover { background: var(--border); color: var(--text); }
-    .panel-ctrl-btn.danger:hover { background: rgba(248,81,73,0.2); color: #f85149; }
-
-    /* ── CODE EDITOR ── */
-    .code-editor-wrap {
-      flex: 1; position: relative; overflow: hidden;
-    }
-    .line-numbers {
-      position: absolute; left: 0; top: 0; bottom: 0;
-      width: 44px; padding: 12px 0;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px; line-height: 20px;
-      color: var(--text-muted); text-align: right;
-      padding-right: 10px;
-      pointer-events: none;
-      z-index: 2; overflow: hidden;
-      user-select: none;
-    }
-    .highlight-layer {
-      position: absolute; left: 44px; top: 0; right: 0; bottom: 0;
-      padding: 12px 14px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px; line-height: 20px;
-      color: var(--text);
-      white-space: pre;
-      overflow: auto;
-      pointer-events: none;
-      z-index: 1;
-      tab-size: 2;
-    }
-    .code-textarea {
-      position: absolute; left: 44px; top: 0; right: 0; bottom: 0;
-      padding: 12px 14px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px; line-height: 20px;
-      color: transparent;
-      caret-color: var(--accent);
-      background: transparent;
-      border: none; outline: none; resize: none;
-      z-index: 3;
-      tab-size: 2;
-      white-space: pre;
-      overflow: auto;
-      spellcheck: false;
-    }
-    .code-textarea::selection { background: rgba(255,180,0,0.2); }
-
-    /* sync scroll */
-    .code-editor-wrap .highlight-layer,
-    .code-editor-wrap .line-numbers-inner { }
-
-    /* ── SYNTAX COLORS ── */
-    .hl-tag { color: #ff7b72; }
-    .hl-attr { color: #79c0ff; }
-    .hl-string { color: #a5d6ff; }
-    .hl-comment { color: #6e7681; font-style: italic; }
-    .hl-css-prop { color: #7ee787; }
-    .hl-css-val { color: #ffa657; }
-    .hl-css-sel { color: #ff7b72; }
-    .hl-css-at { color: #d2a8ff; }
-    .hl-keyword { color: #d2a8ff; }
-    .hl-number { color: #ffa657; }
-    .hl-func { color: #79c0ff; }
-    .hl-js-string { color: #a5d6ff; }
-    .hl-js-comment { color: #6e7681; font-style: italic; }
-    .hl-bool { color: #ff7b72; }
-
-    /* ── AUTOCOMPLETE ── */
-    .autocomplete-dropdown {
-      position: absolute; z-index: 1000;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      max-height: 180px; overflow-y: auto;
-      min-width: 160px;
-      display: none;
-    }
-    .autocomplete-dropdown.visible { display: block; animation: fadeIn 0.12s ease; }
-    .ac-item {
-      padding: 7px 12px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px; cursor: pointer;
-      display: flex; align-items: center; gap: 8px;
-      transition: background 0.1s;
-    }
-    .ac-item:hover, .ac-item.selected { background: rgba(255,180,0,0.12); color: var(--accent); }
-    .ac-badge {
-      font-size: 10px; padding: 1px 5px; border-radius: 3px;
-      font-weight: 600; letter-spacing: 0.5px;
-    }
-    .ac-html { background: rgba(255,123,114,0.2); color: var(--html); }
-    .ac-css  { background: rgba(121,192,255,0.2); color: var(--css); }
-    .ac-js   { background: rgba(210,168,255,0.2); color: var(--js); }
-
-    /* ── PREVIEW ── */
-    .preview-bar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 12px; height: 38px;
-      background: var(--surface2);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .preview-title { font-size: 12px; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 7px; }
-    .preview-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
-    .preview-view-btns { display: flex; gap: 4px; }
-    .view-btn {
-      padding: 4px 10px; border-radius: 5px; border: 1px solid var(--border);
-      background: none; cursor: pointer; color: var(--text-muted);
-      font-size: 11px; font-family: 'Syne', sans-serif; font-weight: 600;
-      transition: all 0.15s;
-    }
-    .view-btn.active, .view-btn:hover { color: var(--accent); border-color: var(--accent); background: rgba(255,180,0,0.08); }
-
-    .preview-container {
-      background: #fff;
-      transition: all 0.3s ease;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .preview-container.desktop { height: 260px; width: 100%; }
-    .preview-container.mobile { height: 260px; width: 375px; margin: 0 auto; border: 2px solid var(--border); border-radius: 12px; overflow: hidden; }
-
-    .preview-iframe { width: 100%; height: 100%; border: none; background: #fff; }
-
-    /* ── SETTINGS PANEL ── */
-    .settings-panel {
-      width: 240px; flex-shrink: 0;
-      background: var(--surface);
-      border-left: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      overflow: hidden;
-      transition: width 0.3s ease;
-    }
-    .settings-panel.collapsed { width: 0; }
-    .settings-header {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 8px;
-    }
-    .settings-header span { font-size: 13px; font-weight: 700; }
-    .settings-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 16px; }
-    .settings-group { display: flex; flex-direction: column; gap: 8px; }
-    .settings-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
-    .settings-select, .settings-range {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 6px; color: var(--text); padding: 6px 10px;
-      font-family: 'Syne', sans-serif; font-size: 12px; width: 100%;
-      outline: none;
-    }
-    .settings-select:focus { border-color: var(--accent); }
-    .settings-range { padding: 4px 6px; cursor: pointer; accent-color: var(--accent); }
-    .font-size-val { font-size: 12px; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
-
-    .toggle-row { display: flex; align-items: center; justify-content: space-between; }
-    .toggle-label { font-size: 12px; color: var(--text-muted); }
-    .toggle {
-      position: relative; width: 34px; height: 18px;
-      background: var(--border); border-radius: 9px; cursor: pointer;
-      transition: background 0.2s;
-    }
-    .toggle.on { background: var(--accent); }
-    .toggle::after {
-      content: ''; position: absolute;
-      width: 14px; height: 14px; background: white;
-      border-radius: 50%; top: 2px; left: 2px;
-      transition: transform 0.2s;
-    }
-    .toggle.on::after { transform: translateX(16px); }
-
-    /* ── HOME PAGE ── */
-    .home-page {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 0;
-      background: var(--bg);
-      overflow-y: auto;
-      padding: 40px 20px;
-      position: relative;
-    }
-    .home-page::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(255,180,0,0.06), transparent);
-      pointer-events: none;
-    }
-    .home-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(255,180,0,0.1); border: 1px solid rgba(255,180,0,0.3);
-      border-radius: 20px; padding: 4px 14px;
-      font-size: 12px; font-weight: 600; color: var(--accent);
-      margin-bottom: 24px; letter-spacing: 0.5px;
-    }
-    .home-title {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(32px, 5vw, 60px);
-      font-weight: 800; line-height: 1.1;
-      text-align: center; margin-bottom: 20px;
-      background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent2) 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .home-desc {
-      font-size: clamp(14px, 2vw, 17px); color: var(--text-muted);
-      text-align: center; max-width: 560px; line-height: 1.7;
-      margin-bottom: 36px;
-    }
-    .home-cta {
-      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 56px;
-    }
-    .cta-primary {
-      display: flex; align-items: center; gap: 8px;
-      background: var(--accent); color: #0d1117;
-      border: none; border-radius: 10px;
-      padding: 13px 28px; font-family: 'Syne', sans-serif;
-      font-size: 14px; font-weight: 700; cursor: pointer;
-      box-shadow: 0 0 30px rgba(255,180,0,0.35);
-      transition: all 0.2s;
-    }
-    .cta-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(255,180,0,0.5); }
-    .cta-secondary {
-      display: flex; align-items: center; gap: 8px;
-      background: var(--surface); color: var(--text);
-      border: 1px solid var(--border); border-radius: 10px;
-      padding: 13px 24px; font-family: 'Syne', sans-serif;
-      font-size: 14px; font-weight: 600; cursor: pointer;
-      transition: all 0.2s;
-    }
-    .cta-secondary:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
-
-    .feature-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px; width: 100%; max-width: 800px;
-    }
-    .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--border); border-radius: 12px;
-      padding: 20px 18px;
-      transition: all 0.2s;
-    }
-    .feature-card:hover { border-color: rgba(255,180,0,0.3); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
-    .feature-icon { font-size: 22px; margin-bottom: 10px; }
-    .feature-name { font-size: 14px; font-weight: 700; margin-bottom: 5px; }
-    .feature-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-
-    /* ── FOOTER ── */
-    .app-footer {
-      background: var(--surface); border-top: 1px solid var(--border);
-      padding: 16px 24px;
-      display: flex; align-items: center; justify-content: space-between;
-      flex-shrink: 0;
-    }
-    .footer-copy { font-size: 12px; color: var(--text-muted); }
-    .footer-copy span { color: var(--accent); }
-    .footer-links { display: flex; gap: 16px; }
-    .footer-link {
-      font-size: 12px; color: var(--text-muted); cursor: pointer;
-      text-decoration: none; transition: color 0.15s;
-    }
-    .footer-link:hover { color: var(--accent); }
-
-    /* ── TOAST ── */
-    .toast {
-      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 10px; padding: 12px 18px;
-      display: flex; align-items: center; gap: 10px;
-      font-size: 13px; color: var(--text);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-      transform: translateY(80px); opacity: 0;
-      transition: all 0.3s ease;
-    }
-    .toast.show { transform: translateY(0); opacity: 1; }
-    .toast-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
-
-    /* ── ANIMATIONS ── */
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-    @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-
-    .editor-area { animation: fadeIn 0.3s ease; }
-    .home-page > * { animation: fadeIn 0.5s ease both; }
-    .home-page > *:nth-child(2) { animation-delay: 0.05s; }
-    .home-page > *:nth-child(3) { animation-delay: 0.1s; }
-    .home-page > *:nth-child(4) { animation-delay: 0.15s; }
-    .home-page > *:nth-child(5) { animation-delay: 0.2s; }
-
-    /* Scrollbars */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-    .glow-border {
-      box-shadow: 0 0 0 1px var(--border), 0 0 20px rgba(255,180,0,0.08);
-    }
-    .glow-border:focus-within {
-      box-shadow: 0 0 0 1px rgba(255,180,0,0.4), 0 0 24px rgba(255,180,0,0.12);
-    }
-  </style>
-  <style>body { box-sizing: border-box; }</style>
-  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
-  <script>
-    // Inline initialization will happen after DOM loads
-  </script>
- </head>
- <body>
-  <div class="app-root" id="appRoot">
-   <!-- ── TOPBAR ── -->
-   <div class="topbar" role="banner">
-    <!-- Left -->
-    <div class="logo-area">
-     <img src="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png" alt="Craby Editor Logo" class="logo-img" loading="lazy" onerror="this.style.display='none'"> <span class="logo-title" id="logoTitle">Craby Editor</span>
-    </div><!-- Center Nav -->
-    <nav class="top-nav" aria-label="Main navigation">
-     <button class="top-nav-btn active" id="navHome" onclick="showPage('home')">Home</button> <button class="top-nav-btn" id="navEditor" onclick="showPage('editor')">Editor</button> <button class="top-nav-btn" id="navDocs" onclick="showToast('Docs coming soon!')">Docs</button> <button class="top-nav-btn" id="navAbout" onclick="showToast('Craby Editor v1.0 — Build amazing things!')">About</button>
-    </nav><!-- Right Actions -->
-    <div class="top-actions">
-     <button class="top-btn btn-run" onclick="runPreview()" aria-label="Run code"> <i data-lucide="play" style="width:13px;height:13px"></i> Run </button> <button class="top-btn btn-secondary" onclick="beautifyAll()" aria-label="Beautify code"> <i data-lucide="sparkles" style="width:13px;height:13px"></i> Beautify </button> <button class="top-btn btn-secondary" onclick="downloadFiles()" aria-label="Download files"> <i data-lucide="download" style="width:13px;height:13px"></i> Download </button> <button class="top-btn btn-secondary" id="settingsToggleBtn" onclick="toggleSettings()" aria-label="Settings"> <i data-lucide="settings" style="width:13px;height:13px"></i> </button>
-    </div>
-   </div><!-- ── HOME PAGE ── -->
-   <main class="home-page" id="homePage" role="main">
-    <div class="home-badge">
-     ✦ Online IDE · No Install Required
-    </div>
-    <h1 class="home-title" id="homeTitle">Code. Preview. Ship.</h1>
-    <p class="home-desc" id="homeDesc">Craby Editor is a powerful online HTML, CSS, and JavaScript editor with live preview, syntax highlighting, smart autocompletion, and instant code execution — right in your browser.</p>
-    <div class="home-cta">
-     <button class="cta-primary" onclick="showPage('editor')"> <i data-lucide="code-2" style="width:16px;height:16px"></i> Start Coding </button> <button class="cta-secondary" onclick="showToast('Docs coming soon!')"> <i data-lucide="book-open" style="width:16px;height:16px"></i> View Docs </button>
-    </div>
-    <div class="feature-grid">
-     <div class="feature-card">
-      <div class="feature-icon">
-       ⚡
-      </div>
-      <div class="feature-name">
-       Live Preview
-      </div>
-      <div class="feature-desc">
-       See your changes render instantly as you type
-      </div>
-     </div>
-     <div class="feature-card">
-      <div class="feature-icon">
-       🎨
-      </div>
-      <div class="feature-name">
-       Syntax Highlight
-      </div>
-      <div class="feature-desc">
-       Full color syntax for HTML, CSS, and JavaScript
-      </div>
-     </div>
-     <div class="feature-card">
-      <div class="feature-icon">
-       🧠
-      </div>
-      <div class="feature-name">
-       Smart Suggest
-      </div>
-      <div class="feature-desc">
-       Autocomplete for tags, properties, and keywords
-      </div>
-     </div>
-     <div class="feature-card">
-      <div class="feature-icon">
-       ✨
-      </div>
-      <div class="feature-name">
-       Auto Beautify
-      </div>
-      <div class="feature-desc">
-       Format and indent your code with one click
-      </div>
-     </div>
-    </div>
-   </main><!-- ── EDITOR PAGE ── -->
-   <div class="main-layout" id="editorPage" style="display:none; flex:1; overflow:hidden;">
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar" aria-label="File explorer">
-     <div class="sidebar-header">
-      <span class="sidebar-title">Explorer</span> <button class="sidebar-add" onclick="addNewFile()" aria-label="Add new file"> <i data-lucide="plus" style="width:14px;height:14px"></i> </button>
-     </div>
-     <div class="file-list" id="fileList">
-      <div class="file-item active" onclick="focusEditor('html')" id="file-html">
-       <span class="file-dot dot-html"></span> index.html
-      </div>
-      <div class="file-item" onclick="focusEditor('css')" id="file-css">
-       <span class="file-dot dot-css"></span> style.css
-      </div>
-      <div class="file-item" onclick="focusEditor('js')" id="file-js">
-       <span class="file-dot dot-js"></span> script.js
-      </div>
-     </div>
-    </aside><!-- Center: Editors + Preview -->
-    <div class="editor-area" id="editorArea">
-     <!-- Editors Row -->
-     <div class="editors-container" id="editorsContainer">
-      <!-- HTML Panel -->
-      <div class="editor-panel glow-border" id="panel-html">
-       <div class="panel-titlebar">
-        <div class="panel-title-left">
-         <span class="panel-lang-badge" style="background:var(--html)"></span> <span class="panel-filename">index.html</span>
-        </div>
-        <div class="panel-controls">
-         <button class="panel-ctrl-btn" onclick="minimizePanel('html')" title="Minimize" aria-label="Minimize HTML panel"> <i data-lucide="minus" style="width:12px;height:12px"></i> </button> <button class="panel-ctrl-btn" onclick="fullscreenPanel('html')" title="Fullscreen" aria-label="Fullscreen HTML panel"> <i data-lucide="maximize-2" style="width:12px;height:12px"></i> </button> <button class="panel-ctrl-btn danger" onclick="clearPanel('html')" title="Clear" aria-label="Clear HTML content"> <i data-lucide="trash-2" style="width:12px;height:12px"></i> </button>
-        </div>
-       </div>
-       <div class="code-editor-wrap" id="wrap-html">
-        <div class="line-numbers" id="ln-html"></div>
-        <div class="highlight-layer" id="hl-html" aria-hidden="true"></div><textarea class="code-textarea" id="editor-html" spellcheck="false" autocorrect="off" autocapitalize="off" aria-label="HTML editor" oninput="onEditorInput('html')" onkeydown="onEditorKeydown(event,'html')" onscroll="syncScroll('html')"></textarea>
-        <div class="autocomplete-dropdown" id="ac-html"></div>
-       </div>
-      </div><!-- CSS Panel -->
-      <div class="editor-panel glow-border" id="panel-css">
-       <div class="panel-titlebar">
-        <div class="panel-title-left">
-         <span class="panel-lang-badge" style="background:var(--css)"></span> <span class="panel-filename">style.css</span>
-        </div>
-        <div class="panel-controls">
-         <button class="panel-ctrl-btn" onclick="minimizePanel('css')" title="Minimize" aria-label="Minimize CSS panel"> <i data-lucide="minus" style="width:12px;height:12px"></i> </button> <button class="panel-ctrl-btn" onclick="fullscreenPanel('css')" title="Fullscreen" aria-label="Fullscreen CSS panel"> <i data-lucide="maximize-2" style="width:12px;height:12px"></i> </button> <button class="panel-ctrl-btn danger" onclick="clearPanel('css')" title="Clear" aria-label="Clear CSS content"> <i data-lucide="trash-2" style="width:12px;height:12px"></i> </button>
-        </div>
-       </div>
-       <div class="code-editor-wrap" id="wrap-css">
-        <div class="line-numbers" id="ln-css"></div>
-        <div class="highlight-layer" id="hl-css" aria-hidden="true"></div><textarea class="code-textarea" id="editor-css" spellcheck="false" autocorrect="off" autocapitalize="off" aria-label="CSS editor" oninput="onEditorInput('css')" onkeydown="onEditorKeydown(event,'css')" onscroll="syncScroll('css')"></textarea>
-        <div class="autocomplete-dropdown" id="ac-css"></div>
-       </div>
-      </div><!-- JS Panel -->
-      <div class="editor-panel glow-border" id="panel-js">
-       <div class="panel-titlebar">
-        <div class="panel-title-left">
-         <span class="panel-lang-badge" style="background:var(--js)"></span> <span class="panel-filename">script.js</span>
-        </div>
-        <div class="panel-controls">
-         <button class="panel-ctrl-btn" onclick="minimizePanel('js')" title="Minimize" aria-label="Minimize JS panel"> <i data-lucide="minus" style="width:12px;height:12px"></i> </button> <button class="panel-ctrl-btn" onclick="fullscreenPanel('js')" title="Fullscreen" aria-label="Fullscreen JS panel"> <i data-lucide="maximize-2" style="width:12px;height:12px"></i> </button> <button class="panel-ctrl-btn danger" onclick="clearPanel('js')" title="Clear" aria-label="Clear JS content"> <i data-lucide="trash-2" style="width:12px;height:12px"></i> </button>
-        </div>
-       </div>
-       <div class="code-editor-wrap" id="wrap-js">
-        <div class="line-numbers" id="ln-js"></div>
-        <div class="highlight-layer" id="hl-js" aria-hidden="true"></div><textarea class="code-textarea" id="editor-js" spellcheck="false" autocorrect="off" autocapitalize="off" aria-label="JavaScript editor" oninput="onEditorInput('js')" onkeydown="onEditorKeydown(event,'js')" onscroll="syncScroll('js')"></textarea>
-        <div class="autocomplete-dropdown" id="ac-js"></div>
-       </div>
-      </div>
-     </div><!-- Preview -->
-     <div class="preview-bar">
-      <div class="preview-title">
-       <span class="preview-dot"></span> Live Preview
-      </div>
-      <div class="preview-view-btns">
-       <button class="view-btn active" id="btnDesktop" onclick="setView('desktop')"> <i data-lucide="monitor" style="width:11px;height:11px;vertical-align:middle;margin-right:4px"></i>Desktop </button> <button class="view-btn" id="btnMobile" onclick="setView('mobile')"> <i data-lucide="smartphone" style="width:11px;height:11px;vertical-align:middle;margin-right:4px"></i>Mobile </button>
-      </div>
-     </div>
-     <div class="preview-container desktop" id="previewContainer">
-      <iframe class="preview-iframe" id="previewFrame" title="Live preview" sandbox="allow-scripts allow-same-origin"></iframe>
-     </div>
-    </div><!-- Settings Panel -->
-    <aside class="settings-panel collapsed" id="settingsPanel" aria-label="Settings">
-     <div class="settings-header">
-      <i data-lucide="settings" style="width:14px;height:14px;color:var(--accent)"></i> <span>Settings</span>
-     </div>
-     <div class="settings-body">
-      <div class="settings-group">
-       <label class="settings-label" for="fontSizeRange">Font Size</label>
-       <div style="display:flex;align-items:center;gap:8px;">
-        <input type="range" class="settings-range" id="fontSizeRange" min="10" max="20" value="13" oninput="setFontSize(this.value)"> <span class="font-size-val" id="fontSizeVal">13px</span>
-       </div>
-      </div>
-      <div class="settings-group">
-       <label class="settings-label" for="fontFamilySelect">Font Family</label> <select class="settings-select" id="fontFamilySelect" onchange="setFontFamily(this.value)"> <option value="'JetBrains Mono', monospace">JetBrains Mono</option> <option value="'Courier New', monospace">Courier New</option> <option value="'Fira Code', monospace">Fira Code</option> <option value="monospace">Monospace</option> </select>
-      </div>
-      <div class="settings-group">
-       <label class="settings-label" for="themeSelect">Theme</label> <select class="settings-select" id="themeSelect" onchange="setTheme(this.value)"> <option value="dark">Dark (Default)</option> <option value="darker">Darker</option> <option value="midnight">Midnight Blue</option> </select>
-      </div>
-      <div class="settings-group">
-       <div class="settings-label">
-        Show Panels
-       </div>
-       <div class="toggle-row">
-        <span class="toggle-label">HTML Editor</span>
-        <div class="toggle on" id="toggle-html" onclick="togglePanel('html')"></div>
-       </div>
-       <div class="toggle-row">
-        <span class="toggle-label">CSS Editor</span>
-        <div class="toggle on" id="toggle-css" onclick="togglePanel('css')"></div>
-       </div>
-       <div class="toggle-row">
-        <span class="toggle-label">JS Editor</span>
-        <div class="toggle on" id="toggle-js" onclick="togglePanel('js')"></div>
-       </div>
-      </div>
-      <div class="settings-group">
-       <label class="settings-label" for="autoRunToggle">Auto Run</label>
-       <div class="toggle-row">
-        <span class="toggle-label">Auto run on type</span>
-        <div class="toggle on" id="autoRunToggle" onclick="toggleAutoRun()"></div>
-       </div>
-      </div>
-     </div>
-    </aside>
-   </div><!-- ── FOOTER ── -->
-   <footer class="app-footer" id="appFooter">
-    <p class="footer-copy">© 2025 <span>Craby Editor</span> — Build anything in the browser.</p>
-    <nav class="footer-links" aria-label="Footer navigation">
-     <a class="footer-link" onclick="showPage('home')">Home</a> <a class="footer-link" onclick="showPage('editor')">Editor</a> <a class="footer-link" onclick="showToast('Docs coming soon!')">Docs</a> <a class="footer-link" onclick="showToast('Privacy: Your code stays in your browser.')">Privacy</a>
-    </nav>
-   </footer>
-  </div><!-- Toast -->
-  <div class="toast" id="toast" role="status" aria-live="polite">
-   <span class="toast-dot"></span> <span id="toastMsg"></span>
-  </div>
-  <script>
-/* ── STATE ── */
-const state = {
-  currentPage: 'home',
-  settingsOpen: false,
-  autoRun: true,
-  viewMode: 'desktop',
-  panelStates: { html: 'normal', css: 'normal', js: 'normal' },
-  fontFamily: "'JetBrains Mono', monospace",
-  fontSize: 13,
-  acState: { lang: null, selectedIndex: -1, items: [], word: '', start: 0 }
-};
-
-/* ── DEFAULT CODE ── */
-const defaultCode = {
-  html: `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>My Project</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Craby Lab - Online Code Editor</title>
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+
+<style>
+:root{
+  --bg:#0d1117;
+  --panel:#161b22;
+  --accent:#ffb400;
+  --text:#c9d1d9;
+}
+
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* TOPBAR */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 20px;
+  background:#010409;
+  border-bottom:2px solid var(--accent);
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.logo img{
+  height:35px;
+}
+
+.nav{
+  display:flex;
+  gap:20px;
+}
+
+.nav a{
+  color:white;
+  text-decoration:none;
+  font-size:14px;
+}
+
+.nav a:hover{
+  color:var(--accent);
+}
+
+/* HERO */
+.hero{
+  text-align:center;
+  padding:80px 20px;
+}
+
+.hero h1{
+  font-size:40px;
+  color:var(--accent);
+}
+
+.hero p{
+  max-width:500px;
+  margin:10px auto;
+  opacity:0.8;
+}
+
+.btn{
+  margin-top:20px;
+  padding:12px 20px;
+  background:var(--accent);
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.btn:hover{
+  background:white;
+}
+
+/* FEATURES */
+.features{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:20px;
+  padding:40px 20px;
+}
+
+.card{
+  background:var(--panel);
+  padding:20px;
+  border-radius:10px;
+  width:250px;
+  text-align:center;
+  border:1px solid rgba(255,255,255,0.1);
+}
+
+/* FOOTER */
+.footer{
+  text-align:center;
+  padding:20px;
+  border-top:1px solid rgba(255,255,255,0.1);
+  margin-top:40px;
+}
+</style>
 </head>
+
 <body>
-  <div class="container">
-    <h1>Hello, Craby Editor! 🦀</h1>
-    <p>Edit this code and click <strong>Run</strong> to see the live preview.</p>
-    <button onclick="greet()">Click Me!</button>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <img src="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png">
+    <b>Craby Lab</b>
   </div>
-</body>
-</html>`,
-  css: `* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
 
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background: #0d1117;
-  color: #e6edf3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-}
-
-.container {
-  text-align: center;
-  padding: 40px;
-}
-
-h1 {
-  font-size: 2rem;
-  color: #ffb400;
-  margin-bottom: 12px;
-}
-
-p {
-  color: #8b949e;
-  margin-bottom: 24px;
-}
-
-button {
-  background: #ffb400;
-  color: #0d1117;
-  border: none;
-  padding: 10px 24px;
-  border-radius: 8px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-button:hover {
-  opacity: 0.85;
-}`,
-  js: `function greet() {
-  const btn = document.querySelector('button');
-  btn.textContent = '🎉 You clicked me!';
-  btn.style.background = '#ff6b35';
+  <div class="nav">
+    <a href="#">Home</a>
+    <a href="editor.html">Editor</a>
+    <a href="#">Docs</a>
+    <a href="#">About</a>
+  </div>
+</div>
+ <div class="321">
   
-  setTimeout(() => {
-    btn.textContent = 'Click Me!';
-    btn.style.background = '#ffb400';
-  }, 2000);
+<img src="Logo.png"
+style="
+width:110px;
+height:auto;
+margin-bottom:20px;
+filter:drop-shadow(0 0 20px var(--accent));
+animation:premiumFloat 2s ease-in-out infinite;
+">
+
+<div style="
+font-size:30px;
+font-weight:900;
+color:var(--accent);
+font-family:'Plus Jakarta Sans',sans-serif;
+margin-bottom:12px;
+letter-spacing:2px;
+transform:scale(1);
+animation:pctPop 1s ease;
+">
+<span id="load-val">0</span>%
+</div>
+
+<div style="
+width:100%;
+height:8px;
+background:rgba(255,255,255,0.05);
+border-radius:20px;
+overflow:hidden;
+border:1px solid var(--border);
+">
+
+<div id="bar-fill"
+style="
+height:100%;
+width:0%;
+background:linear-gradient(90deg,var(--accent),#00eaff,var(--accent));
+background-size:200% 100%;
+box-shadow:0 0 20px var(--accent);
+transition:width 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+">
+</div>
+
+</div>
+</div>
+</div>
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TTVQBL6S"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <header>
+    <div class="logo-container">
+        <img src="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png" alt="Logo">
+    </div>
+    <div class="header-actions">
+        <button class="icon-btn" onclick="beautifyCode()" title="Format Code"><i class="fas fa-magic"></i></button>
+        <button class="icon-btn" onclick="exportCode()" title="Download Project"><i class="fas fa-download"></i></button>
+        <button id="run-btn" class="icon-btn run-btn" onclick="runCode()"><i class="fas fa-play"></i> RUN</button>
+        <button class="icon-btn" onclick="toggleSettings()" title="Settings"><i class="fas fa-sliders-h"></i></button>
+    </div>
+</header>
+
+<div id="shutter-trigger" onclick="toggleShutter()">
+    <i class="fas fa-chevron-right"></i>
+</div>
+
+<main class="main-container">
+    <div id="editor-grid" class="editor-grid"></div>
+</main>
+
+<div id="shutter" class="shutter">
+    <div class="shutter-header">
+        <h3 style="color: var(--accent);">TASKBAR</h3>
+         <div id="taskbar-files"></div>
+        <i class="fas fa-times" onclick="toggleShutter()" style="cursor: pointer; color: white;"></i>
+    </div>
+    <div class="shutter-list">
+        <button class="add-btn" onclick="addNewFilePrompt()"><i class="fas fa-plus"></i> NEW FILE</button>
+        <div id="shutter-file-list"></div>
+    </div>
+</div>
+
+<div id="settingsPanel" class="settings-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="color: var(--accent);">IDE Settings</h3>
+        <i class="fas fa-times" onclick="toggleSettings()" style="cursor: pointer; color: #ff4d4d;"></i>
+    </div>
+
+    <div class="s-group">
+        <label>Show/Hide Editors</label>
+        <div class="checkbox-group">
+            <label><input type="checkbox" id="chk-html" checked onchange="updateVisibility()"> HTML</label>
+            <label><input type="checkbox" id="chk-css" checked onchange="updateVisibility()"> CSS</label>
+            <label><input type="checkbox" id="chk-js" checked onchange="updateVisibility()"> JS</label>
+        </div>
+    </div>
+
+    <div class="s-group">
+        <label>Font Family</label>
+        <select id="font-family-sel" onchange="updateThemeAndFont()">
+            <option value="'Fira Code', monospace">Fira Code</option>
+            <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+            <option value="'Source Code Pro', monospace">Source Code Pro</option>
+            <option value="'Roboto Mono', monospace">Roboto Mono</option>
+            <option value="'Ubuntu Mono', monospace">Ubuntu Mono</option>
+            <option value="'Courier New', monospace">Courier New</option>
+        </select>
+    </div>
+
+    <div class="s-group">
+        <label>Font Size: <span id="font-size-val">14px</span></label>
+        <input type="range" id="font-size-range" min="5" max="50" value="14" oninput="updateFontSize(this.value)">
+    </div>
+
+    <div class="s-group">
+        <label>Editor Theme</label>
+        <select id="theme-sel" onchange="updateThemeAndFont()">
+            <option value="dark">Github Dark</option>
+            <option value="monokai">Monokai Pro</option>
+            <option value="dracula">Dracula</option>
+            <option value="cyberpunk">Cyberpunk Neon</option>
+            <option value="matrix">Matrix Green</option>
+            <option value="nord">Nordic Blue</option>
+            <option value="midnight">Midnight Deep</option>
+            <option value="solarized">Solarized Dark</option>
+            <option value="oceanic">Oceanic Blue</option>
+            <option value="evergreen">Evergreen Forest</option>
+            <option value="midnight_purple">Midnight Purple</option>
+            <option value="light">Simple Light</option>
+        </select>
+    </div>
+
+    <button class="add-btn" onclick="toggleSettings()" style="margin-top: 10px;">SAVE & CLOSE</button>
+</div>
+
+<div id="preview-overlay" class="preview-overlay">
+    <div class="overlay-header">
+        <div class="logo-container">
+            <img src="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png" alt="Craby Logo" height="30">
+        </div>
+    <div style="display: flex; gap: 10px;">
+    <button class="icon-btn" onclick="refreshPreview()"><i class="fas fa-sync-alt"></i></button>
+    
+    <button class="icon-btn" onclick="setPreviewSize('100%')"><i class="fas fa-desktop"></i></button>
+    <button class="icon-btn" onclick="setPreviewSize('375px')"><i class="fas fa-mobile-alt"></i></button>
+    <button onclick="closePreview()" class="icon-btn">CLOSE</button>
+</div>
+  </div>
+    <div id="preview-body" style="flex:1; display:flex; justify-content:center; align-items:center; background:#1e1e1e;">
+        <iframe id="output-frame" style="width:100%; height:100%; background:white; transition: 0.3s ease;"></iframe>
+    </div>
+</div>
+<script src="1.js"></script>
+ </div>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>Craby Lab</h1>
+  <p>Write HTML, CSS, and JavaScript code instantly with live preview. Fast, free and powerful online editor.</p>
+  
+  <button class="btn" onclick="openEditor()">Start Coding</button>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="card">
+    <h3>⚡ Live Preview</h3>
+    <p>See your code output instantly.</p>
+  </div>
+
+  <div class="card">
+    <h3>🎨 Smart Editor</h3>
+    <p>Syntax highlight and auto suggestions.</p>
+  </div>
+
+  <div class="card">
+    <h3>📱 Mobile Friendly</h3>
+    <p>Code from anywhere on any device.</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p>Craby Lab is a free online code editor for developers.</p>
+  <p>© 2026 Craby Lab</p>
+</div>
+
+<script>
+function openEditor(){
+  window.location.href = "editor.html";
 }
-
-console.log('Craby Editor loaded!');`
-};
-
-/* ── AUTO-COMPLETE LISTS ── */
-const suggestions = {
-  html: ['div','span','p','h1','h2','h3','h4','ul','ol','li','a','img','input','button','form','label','select','option','textarea','table','tr','td','th','section','article','nav','header','footer','main','aside','figure','figcaption','video','audio','canvas','script','style','link','meta','title','head','body','html','strong','em','br','hr'],
-  css: ['color','background','background-color','font-size','font-family','font-weight','margin','padding','border','border-radius','display','flex','grid','width','height','max-width','min-height','position','top','left','right','bottom','z-index','opacity','transition','transform','box-shadow','text-align','line-height','overflow','cursor','align-items','justify-content','flex-direction','gap','grid-template-columns','animation'],
-  js: ['const','let','var','function','return','if','else','for','while','class','new','this','typeof','instanceof','import','export','default','async','await','try','catch','finally','throw','console','document','window','Array','Object','String','Number','Boolean','Math','JSON','Promise','setTimeout','setInterval','addEventListener','querySelector','getElementById','forEach','map','filter','reduce','length','push','pop','splice','slice','includes','indexOf']
-};
-
-/* ── INIT ── */
-function init() {
-  loadFromStorage();
-  ['html','css','js'].forEach(lang => {
-    const ta = document.getElementById('editor-' + lang);
-    if (ta) {
-      updateHighlight(lang);
-      updateLineNumbers(lang);
-    }
-  });
-  runPreview();
-  lucide.createIcons();
-  initElementSdk();
-}
-
-/* ── STORAGE ── */
-function loadFromStorage() {
-  ['html','css','js'].forEach(lang => {
-    const saved = localStorage.getItem('craby_' + lang);
-    const ta = document.getElementById('editor-' + lang);
-    if (ta) ta.value = saved !== null ? saved : defaultCode[lang];
-  });
-}
-
-function saveToStorage(lang) {
-  const ta = document.getElementById('editor-' + lang);
-  if (ta) localStorage.setItem('craby_' + lang, ta.value);
-}
-
-/* ── PAGE ROUTING ── */
-function showPage(page) {
-  state.currentPage = page;
-  const home = document.getElementById('homePage');
-  const editor = document.getElementById('editorPage');
-  const footer = document.getElementById('appFooter');
-
-  document.querySelectorAll('.top-nav-btn').forEach(b => b.classList.remove('active'));
-
-  if (page === 'home') {
-    home.style.display = 'flex';
-    editor.style.display = 'none';
-    document.getElementById('navHome').classList.add('active');
-    footer.style.display = 'flex';
-  } else {
-    home.style.display = 'none';
-    editor.style.display = 'flex';
-    document.getElementById('navEditor').classList.add('active');
-    footer.style.display = 'none';
-    setTimeout(() => { lucide.createIcons(); runPreview(); }, 50);
-  }
-}
-
-/* ── EDITOR INPUT ── */
-let autoRunTimer = null;
-function onEditorInput(lang) {
-  saveToStorage(lang);
-  updateHighlight(lang);
-  updateLineNumbers(lang);
-  hideAutocomplete(lang);
-  checkAutocomplete(lang);
-  if (state.autoRun) {
-    clearTimeout(autoRunTimer);
-    autoRunTimer = setTimeout(runPreview, 900);
-  }
-}
-
-/* ── LINE NUMBERS ── */
-function updateLineNumbers(lang) {
-  const ta = document.getElementById('editor-' + lang);
-  const ln = document.getElementById('ln-' + lang);
-  if (!ta || !ln) return;
-  const lines = ta.value.split('\n').length;
-  let html = '';
-  for (let i = 1; i <= lines; i++) html += `<div>${i}</div>`;
-  ln.innerHTML = html;
-}
-
-/* ── SCROLL SYNC ── */
-function syncScroll(lang) {
-  const ta = document.getElementById('editor-' + lang);
-  const hl = document.getElementById('hl-' + lang);
-  const ln = document.getElementById('ln-' + lang);
-  if (!ta || !hl) return;
-  hl.scrollTop = ta.scrollTop;
-  hl.scrollLeft = ta.scrollLeft;
-  if (ln) ln.scrollTop = ta.scrollTop;
-}
-
-/* ── SYNTAX HIGHLIGHT ── */
-function escapeHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function highlightHTML(code) {
-  let escaped = escapeHtml(code);
-  // Comments
-  escaped = escaped.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="hl-comment">$1</span>');
-  // Tags
-  escaped = escaped.replace(/(&lt;\/?)([\w-]+)/g, '<span class="hl-tag">$1$2</span>');
-  // Attributes
-  escaped = escaped.replace(/\s([\w-:@]+)=/g, ' <span class="hl-attr">$1</span>=');
-  // Strings (attribute values)
-  escaped = escaped.replace(/(=["'][^"']*["'])/g, '<span class="hl-string">$1</span>');
-  return escaped;
-}
-
-function highlightCSS(code) {
-  let escaped = escapeHtml(code);
-  // Comments
-  escaped = escaped.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="hl-comment">$1</span>');
-  // At-rules
-  escaped = escaped.replace(/(@[\w-]+)/g, '<span class="hl-css-at">$1</span>');
-  // Selectors (lines ending with { )
-  escaped = escaped.replace(/^([ \t]*)([^{}/@\n][^{}\n]*)(\{)/gm, '$1<span class="hl-css-sel">$2</span>$3');
-  // Properties
-  escaped = escaped.replace(/([\w-]+)\s*:/g, '<span class="hl-css-prop">$1</span>:');
-  // Values (after colon before semicolon)
-  escaped = escaped.replace(/:\s*([^{};]+)(;|$)/gm, ': <span class="hl-css-val">$1</span>$2');
-  return escaped;
-}
-
-function highlightJS(code) {
-  let escaped = escapeHtml(code);
-  // Single line comments
-  escaped = escaped.replace(/(\/\/[^\n]*)/g, '<span class="hl-js-comment">$1</span>');
-  // Multi-line comments
-  escaped = escaped.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="hl-js-comment">$1</span>');
-  // Strings
-  escaped = escaped.replace(/(["'`][^"'`\n]*["'`])/g, '<span class="hl-js-string">$1</span>');
-  // Numbers
-  escaped = escaped.replace(/\b(\d+\.?\d*)\b/g, '<span class="hl-number">$1</span>');
-  // Booleans/null/undefined
-  escaped = escaped.replace(/\b(true|false|null|undefined|NaN|Infinity)\b/g, '<span class="hl-bool">$1</span>');
-  // Keywords
-  const kw = ['const','let','var','function','return','if','else','for','while','do','switch','case','break','continue','class','new','this','typeof','instanceof','import','export','default','async','await','try','catch','finally','throw','delete','in','of','from','extends','super','static','yield'];
-  kw.forEach(k => {
-    escaped = escaped.replace(new RegExp(`\\b(${k})\\b`, 'g'), '<span class="hl-keyword">$1</span>');
-  });
-  // Function calls
-  escaped = escaped.replace(/\b([\w$]+)\s*(?=\()/g, '<span class="hl-func">$1</span>');
-  return escaped;
-}
-
-function updateHighlight(lang) {
-  const ta = document.getElementById('editor-' + lang);
-  const hl = document.getElementById('hl-' + lang);
-  if (!ta || !hl) return;
-  let code = ta.value;
-  let highlighted;
-  if (lang === 'html') highlighted = highlightHTML(code);
-  else if (lang === 'css') highlighted = highlightCSS(code);
-  else highlighted = highlightJS(code);
-  // Add trailing newline so last line renders
-  hl.innerHTML = highlighted + '\n';
-}
-
-/* ── KEYDOWN ── */
-function onEditorKeydown(e, lang) {
-  const ac = document.getElementById('ac-' + lang);
-  const isACVisible = ac && ac.classList.contains('visible');
-
-  if (isACVisible) {
-    if (e.key === 'ArrowDown') { e.preventDefault(); moveAC(lang, 1); return; }
-    if (e.key === 'ArrowUp') { e.preventDefault(); moveAC(lang, -1); return; }
-    if (e.key === 'Enter' || e.key === 'Tab') {
-      e.preventDefault();
-      acceptAC(lang);
-      return;
-    }
-    if (e.key === 'Escape') { hideAutocomplete(lang); return; }
-  }
-
-  const ta = document.getElementById('editor-' + lang);
-  const pos = ta.selectionStart;
-  const val = ta.value;
-
-  // Tab → 2 spaces
-  if (e.key === 'Tab') {
-    e.preventDefault();
-    insertAt(ta, '  ', pos, pos);
-    return;
-  }
-
-  // Auto-pairs
-  const pairs = { '(': ')', '{': '}', '[': ']', '"': '"', "'": "'" };
-  if (pairs[e.key]) {
-    e.preventDefault();
-    insertAt(ta, e.key + pairs[e.key], pos, pos, -1);
-    onEditorInput(lang);
-    return;
-  }
-
-  // Auto-close HTML tags
-  if (e.key === '>' && lang === 'html') {
-    const before = val.slice(0, pos);
-    const tagMatch = before.match(/<([\w-]+)[^<]*$/);
-    if (tagMatch) {
-      const voidTags = ['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr'];
-      if (!voidTags.includes(tagMatch[1].toLowerCase())) {
-        setTimeout(() => {
-          const newPos = ta.selectionStart;
-          insertAt(ta, `</${tagMatch[1]}>`, newPos, newPos, -(tagMatch[1].length + 3));
-          onEditorInput(lang);
-        }, 0);
-      }
-    }
-  }
-
-  // Enter → auto-indent
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    const before = val.slice(0, pos);
-    const lastLine = before.split('\n').pop();
-    const indent = lastLine.match(/^(\s*)/)[1];
-    // Extra indent after {
-    const extra = /[{([]$/.test(lastLine.trimEnd()) ? '  ' : '';
-    const insert = '\n' + indent + extra;
-    insertAt(ta, insert, pos, pos);
-    onEditorInput(lang);
-    return;
-  }
-}
-
-function insertAt(ta, text, start, end, cursorOffset) {
-  ta.setRangeText(text, start, end, 'end');
-  if (cursorOffset !== undefined) {
-    ta.selectionStart = ta.selectionEnd = ta.selectionStart + cursorOffset;
-  }
-}
-
-/* ── AUTOCOMPLETE ── */
-function checkAutocomplete(lang) {
-  const ta = document.getElementById('editor-' + lang);
-  const wrap = document.getElementById('wrap-' + lang);
-  const ac = document.getElementById('ac-' + lang);
-  if (!ta || !ac) return;
-
-  const pos = ta.selectionStart;
-  const val = ta.value;
-  const before = val.slice(0, pos);
-  let wordMatch;
-
-  if (lang === 'html') wordMatch = before.match(/<([\w-]*)$/);
-  else wordMatch = before.match(/[\w-]+$/);
-
-  if (!wordMatch) { hideAutocomplete(lang); return; }
-  const word = wordMatch[1] !== undefined ? wordMatch[1] : wordMatch[0];
-  if (!word || word.length < 1) { hideAutocomplete(lang); return; }
-
-  const list = suggestions[lang];
-  const filtered = list.filter(s => s.startsWith(word.toLowerCase()) && s !== word).slice(0, 8);
-  if (!filtered.length) { hideAutocomplete(lang); return; }
-
-  state.acState = { lang, selectedIndex: 0, items: filtered, word, start: pos - word.length };
-
-  const badgeClass = `ac-${lang === 'js' ? 'js' : lang === 'css' ? 'css' : 'html'}`;
-  const badgeLabel = lang.toUpperCase();
-  ac.innerHTML = filtered.map((s, i) =>
-    `<div class="ac-item${i===0?' selected':''}" onclick="selectAC('${lang}',${i})" onmouseover="hoverAC('${lang}',${i})">
-      <span>${s}</span>
-      <span class="ac-badge ${badgeClass}">${badgeLabel}</span>
-    </div>`
-  ).join('');
-
-  // Position near cursor (approx)
-  const linesBefore = val.slice(0, pos).split('\n');
-  const lineNum = linesBefore.length;
-  const fontSize = state.fontSize;
-  const lineH = fontSize + 7;
-  const top = 38 + (lineNum * lineH);
-  const charX = linesBefore[linesBefore.length-1].length;
-  const left = 44 + charX * (fontSize * 0.6);
-
-  ac.style.top = `${Math.min(top, wrap.clientHeight - 190)}px`;
-  ac.style.left = `${Math.min(left, wrap.clientWidth - 180)}px`;
-  ac.classList.add('visible');
-}
-
-function moveAC(lang, dir) {
-  const s = state.acState;
-  if (s.lang !== lang) return;
-  s.selectedIndex = Math.max(0, Math.min(s.items.length - 1, s.selectedIndex + dir));
-  const ac = document.getElementById('ac-' + lang);
-  ac.querySelectorAll('.ac-item').forEach((el, i) => {
-    el.classList.toggle('selected', i === s.selectedIndex);
-  });
-}
-
-function hoverAC(lang, idx) {
-  state.acState.selectedIndex = idx;
-  const ac = document.getElementById('ac-' + lang);
-  ac.querySelectorAll('.ac-item').forEach((el, i) => el.classList.toggle('selected', i===idx));
-}
-
-function selectAC(lang, idx) {
-  state.acState.selectedIndex = idx;
-  acceptAC(lang);
-}
-
-function acceptAC(lang) {
-  const s = state.acState;
-  if (s.lang !== lang || s.selectedIndex < 0) return;
-  const chosen = s.items[s.selectedIndex];
-  const ta = document.getElementById('editor-' + lang);
-  const val = ta.value;
-  let replacement = chosen;
-  if (lang === 'html') replacement = `<${chosen}></${chosen}>`;
-
-  ta.setRangeText(replacement, s.start, ta.selectionStart, 'end');
-  // Move cursor inside tag
-  if (lang === 'html') {
-    ta.selectionStart = ta.selectionEnd = s.start + chosen.length + 2;
-  }
-  hideAutocomplete(lang);
-  onEditorInput(lang);
-}
-
-function hideAutocomplete(lang) {
-  const ac = document.getElementById('ac-' + lang);
-  if (ac) ac.classList.remove('visible');
-  if (state.acState.lang === lang) state.acState = { lang: null, selectedIndex: -1, items: [], word: '', start: 0 };
-}
-
-/* ── RUN PREVIEW ── */
-function runPreview() {
-  const html = document.getElementById('editor-html')?.value || '';
-  const css = document.getElementById('editor-css')?.value || '';
-  const js = document.getElementById('editor-js')?.value || '';
-
-  const combined = html.replace('</head>', `<style>${css}</style></head>`)
-                        .replace('</body>', `<script>${js}<\/script></body>`);
-
-  // If HTML doesn't have full structure, wrap it
-  const src = combined.includes('<html') ? combined :
-    `<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
-
-  const frame = document.getElementById('previewFrame');
-  if (frame) {
-    frame.srcdoc = src;
-  }
-}
-
-/* ── BEAUTIFY ── */
-function beautifyAll() {
-  beautifyHTML();
-  beautifyCSS();
-  beautifyJS();
-  showToast('✨ Code beautified!');
-  runPreview();
-}
-
-function beautifyHTML() {
-  const ta = document.getElementById('editor-html');
-  if (!ta) return;
-  let code = ta.value;
-  let indent = 0;
-  const lines = code.split('\n').map(l => l.trim()).filter(l => l);
-  const result = [];
-  const voidTags = ['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr','!doctype'];
-  lines.forEach(line => {
-    if (line.match(/^<\/\w/)) indent = Math.max(0, indent - 1);
-    result.push('  '.repeat(indent) + line);
-    if (line.match(/^<\w/) && !line.match(/\/>$/) && !line.match(/<\/\w+>$/) && !voidTags.some(t => line.toLowerCase().startsWith('<' + t))) {
-      if (!line.match(/^<!--/)) indent++;
-    }
-  });
-  ta.value = result.join('\n');
-  updateHighlight('html'); updateLineNumbers('html'); saveToStorage('html');
-}
-
-function beautifyCSS() {
-  const ta = document.getElementById('editor-css');
-  if (!ta) return;
-  let code = ta.value;
-  code = code.replace(/\s*\{\s*/g, ' {\n  ')
-             .replace(/\s*;\s*/g, ';\n  ')
-             .replace(/\s*\}\s*/g, '\n}\n')
-             .replace(/  \n}/g, '\n}')
-             .replace(/\n{3,}/g, '\n\n')
-             .trim();
-  ta.value = code;
-  updateHighlight('css'); updateLineNumbers('css'); saveToStorage('css');
-}
-
-function beautifyJS() {
-  const ta = document.getElementById('editor-js');
-  if (!ta) return;
-  let code = ta.value;
-  let indent = 0;
-  const lines = code.split('\n').map(l => l.trim());
-  const result = [];
-  lines.forEach(line => {
-    if (line.startsWith('}') || line.startsWith(')') || line.startsWith(']')) indent = Math.max(0, indent - 1);
-    if (line) result.push('  '.repeat(indent) + line);
-    const opens = (line.match(/[{([]/g)||[]).length;
-    const closes = (line.match(/[})\]]/g)||[]).length;
-    indent = Math.max(0, indent + opens - closes);
-  });
-  ta.value = result.join('\n');
-  updateHighlight('js'); updateLineNumbers('js'); saveToStorage('js');
-}
-
-/* ── DOWNLOAD ── */
-function downloadFiles() {
-  const html = document.getElementById('editor-html')?.value || '';
-  const css = document.getElementById('editor-css')?.value || '';
-  const js = document.getElementById('editor-js')?.value || '';
-
-  const full = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Project</title>
-  <style>
-${css}
-  </style>
-</head>
-<body>
-${html.replace(/<!DOCTYPE html>[\s\S]*?<body[^>]*>/i, '').replace(/<\/body>[\s\S]*/i, '')}
-  <script>
-${js}
-  <\/script>
-</body>
-</html>`;
-
-  const blob = new Blob([full], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'craby-project.html';
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('⬇️ Downloading project...');
-}
-
-/* ── PANEL CONTROLS ── */
-function minimizePanel(lang) {
-  const panel = document.getElementById('panel-' + lang);
-  const toggle = document.getElementById('toggle-' + lang);
-  if (state.panelStates[lang] !== 'minimized') {
-    state.panelStates[lang] = 'minimized';
-    panel.classList.add('minimized');
-    if (toggle) { toggle.classList.remove('on'); }
-    showToast(`${lang.toUpperCase()} panel minimized`);
-  } else {
-    state.panelStates[lang] = 'normal';
-    panel.classList.remove('minimized');
-    if (toggle) toggle.classList.add('on');
-  }
-}
-
-function fullscreenPanel(lang) {
-  const panel = document.getElementById('panel-' + lang);
-  if (state.panelStates[lang] !== 'fullscreen') {
-    // Exit others from fullscreen
-    ['html','css','js'].forEach(l => {
-      if (state.panelStates[l] === 'fullscreen') {
-        state.panelStates[l] = 'normal';
-        document.getElementById('panel-' + l)?.classList.remove('fullscreen');
-      }
-    });
-    state.panelStates[lang] = 'fullscreen';
-    panel.classList.add('fullscreen');
-  } else {
-    state.panelStates[lang] = 'normal';
-    panel.classList.remove('fullscreen');
-  }
-  lucide.createIcons();
-}
-
-function clearPanel(lang) {
-  const ta = document.getElementById('editor-' + lang);
-  if (!ta) return;
-  // Two-step: first click shows confirm
-  if (!ta.dataset.confirmClear) {
-    ta.dataset.confirmClear = '1';
-    showToast(`Click Clear again to confirm clearing ${lang.toUpperCase()}`);
-    setTimeout(() => { delete ta.dataset.confirmClear; }, 3000);
-    return;
-  }
-  delete ta.dataset.confirmClear;
-  ta.value = '';
-  saveToStorage(lang);
-  updateHighlight(lang);
-  updateLineNumbers(lang);
-  showToast(`${lang.toUpperCase()} cleared`);
-}
-
-function togglePanel(lang) {
-  const panel = document.getElementById('panel-' + lang);
-  const toggle = document.getElementById('toggle-' + lang);
-  if (!panel || !toggle) return;
-  if (state.panelStates[lang] === 'minimized') {
-    state.panelStates[lang] = 'normal';
-    panel.classList.remove('minimized');
-    toggle.classList.add('on');
-  } else {
-    state.panelStates[lang] = 'minimized';
-    panel.classList.add('minimized');
-    toggle.classList.remove('on');
-  }
-}
-
-function focusEditor(lang) {
-  showPage('editor');
-  document.querySelectorAll('.file-item').forEach(f => f.classList.remove('active'));
-  document.getElementById('file-' + lang)?.classList.add('active');
-  document.getElementById('editor-' + lang)?.focus();
-}
-
-/* ── SETTINGS ── */
-function toggleSettings() {
-  state.settingsOpen = !state.settingsOpen;
-  const panel = document.getElementById('settingsPanel');
-  panel.classList.toggle('collapsed', !state.settingsOpen);
-  lucide.createIcons();
-}
-
-function setFontSize(val) {
-  state.fontSize = parseInt(val);
-  document.getElementById('fontSizeVal').textContent = val + 'px';
-  ['html','css','js'].forEach(lang => {
-    const ta = document.getElementById('editor-' + lang);
-    const hl = document.getElementById('hl-' + lang);
-    if (ta) ta.style.fontSize = val + 'px';
-    if (hl) hl.style.fontSize = val + 'px';
-  });
-  const lineH = parseInt(val) + 7;
-  ['html','css','js'].forEach(lang => {
-    const ta = document.getElementById('editor-' + lang);
-    const hl = document.getElementById('hl-' + lang);
-    const ln = document.getElementById('ln-' + lang);
-    if (ta) ta.style.lineHeight = lineH + 'px';
-    if (hl) hl.style.lineHeight = lineH + 'px';
-    if (ln) ln.style.lineHeight = lineH + 'px';
-  });
-}
-
-function setFontFamily(val) {
-  state.fontFamily = val;
-  ['html','css','js'].forEach(lang => {
-    const ta = document.getElementById('editor-' + lang);
-    const hl = document.getElementById('hl-' + lang);
-    const ln = document.getElementById('ln-' + lang);
-    if (ta) ta.style.fontFamily = val;
-    if (hl) hl.style.fontFamily = val;
-    if (ln) ln.style.fontFamily = val;
-  });
-}
-
-function setTheme(theme) {
-  const root = document.documentElement;
-  if (theme === 'darker') {
-    root.style.setProperty('--bg', '#080c10');
-    root.style.setProperty('--surface', '#0d1117');
-    root.style.setProperty('--surface2', '#111418');
-  } else if (theme === 'midnight') {
-    root.style.setProperty('--bg', '#070b15');
-    root.style.setProperty('--surface', '#0a1020');
-    root.style.setProperty('--surface2', '#0e1628');
-    root.style.setProperty('--accent', '#4d9fff');
-    root.style.setProperty('--accent2', '#7b61ff');
-  } else {
-    root.style.setProperty('--bg', '#0d1117');
-    root.style.setProperty('--surface', '#161b22');
-    root.style.setProperty('--surface2', '#1c2230');
-    root.style.setProperty('--accent', '#ffb400');
-    root.style.setProperty('--accent2', '#ff6b35');
-  }
-}
-
-function toggleAutoRun() {
-  state.autoRun = !state.autoRun;
-  const tog = document.getElementById('autoRunToggle');
-  if (tog) tog.classList.toggle('on', state.autoRun);
-  showToast('Auto run ' + (state.autoRun ? 'enabled' : 'disabled'));
-}
-
-/* ── VIEW MODE ── */
-function setView(mode) {
-  state.viewMode = mode;
-  const container = document.getElementById('previewContainer');
-  document.getElementById('btnDesktop').classList.toggle('active', mode === 'desktop');
-  document.getElementById('btnMobile').classList.toggle('active', mode === 'mobile');
-  container.className = 'preview-container ' + mode;
-}
-
-/* ── ADD FILE ── */
-function addNewFile() {
-  showToast('Multi-file support: use the 3 editors for HTML, CSS, and JS!');
-}
-
-/* ── TOAST ── */
-let toastTimer = null;
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  const toastMsg = document.getElementById('toastMsg');
-  if (!toast || !toastMsg) return;
-  toastMsg.textContent = msg;
-  toast.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
-}
-
-/* ── ELEMENT SDK ── */
-function initElementSdk() {
-  if (!window.elementSdk) return;
-  const defaultConfig = {
-    editor_title: 'Craby Editor',
-    home_headline: 'Code. Preview. Ship.',
-    home_description: 'Craby Editor is a powerful online HTML, CSS, and JavaScript editor with live preview, syntax highlighting, and smart autocompletion — right in your browser.',
-    background_color: '#0d1117',
-    surface_color: '#161b22',
-    text_color: '#e6edf3',
-    accent_color: '#ffb400',
-    font_family: 'Syne',
-    font_size: 14
-  };
-
-  window.elementSdk.init({
-    defaultConfig,
-    onConfigChange: async (config) => {
-      const c = { ...defaultConfig, ...config };
-
-      // Titles
-      const logoTitle = document.getElementById('logoTitle');
-      if (logoTitle) logoTitle.textContent = c.editor_title;
-      const homeTitle = document.getElementById('homeTitle');
-      if (homeTitle) homeTitle.textContent = c.home_headline;
-      const homeDesc = document.getElementById('homeDesc');
-      if (homeDesc) homeDesc.textContent = c.home_description;
-
-      // Colors
-      document.documentElement.style.setProperty('--bg', c.background_color);
-      document.documentElement.style.setProperty('--surface', c.surface_color);
-      document.documentElement.style.setProperty('--text', c.text_color);
-      document.documentElement.style.setProperty('--accent', c.accent_color);
-
-      // Font
-      const ff = c.font_family + ', sans-serif';
-      document.body.style.fontFamily = ff;
-    },
-    mapToCapabilities: (config) => {
-      const c = { ...defaultConfig, ...config };
-      return {
-        recolorables: [
-          {
-            get: () => c.background_color,
-            set: (v) => { c.background_color = v; window.elementSdk.setConfig({ background_color: v }); }
-          },
-          {
-            get: () => c.surface_color,
-            set: (v) => { c.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); }
-          },
-          {
-            get: () => c.text_color,
-            set: (v) => { c.text_color = v; window.elementSdk.setConfig({ text_color: v }); }
-          },
-          {
-            get: () => c.accent_color,
-            set: (v) => { c.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); }
-          }
-        ],
-        borderables: [],
-        fontEditable: {
-          get: () => c.font_family,
-          set: (v) => { c.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
-        },
-        fontSizeable: {
-          get: () => c.font_size,
-          set: (v) => { c.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
-        }
-      };
-    },
-    mapToEditPanelValues: (config) => {
-      const c = { ...defaultConfig, ...config };
-      return new Map([
-        ['editor_title', c.editor_title],
-        ['home_headline', c.home_headline],
-        ['home_description', c.home_description]
-      ]);
-    }
-  });
-}
-
-/* ── CLOSE AC ON OUTSIDE CLICK ── */
-document.addEventListener('click', (e) => {
-  ['html','css','js'].forEach(lang => {
-    if (!e.target.closest('#ac-' + lang) && !e.target.closest('#editor-' + lang)) {
-      hideAutocomplete(lang);
-    }
-  });
-});
-
-/* ── START ── */
-init();
 </script>
+
 </body>
-</html></script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e05329271e6ff97',t:'MTc3NDE4MjUyMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
