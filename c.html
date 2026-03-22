@@ -1,0 +1,1214 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Online C Compiler</title>
+  <meta name="description" content="Free Online C Compiler — Write, compile and run C programs directly in your browser with real-time output console.">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Outfit:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['JetBrains Mono', 'monospace'],
+            display: ['Outfit', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { height: 100%; margin: 0; overflow: hidden; }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+    .glow-border { box-shadow: inset 0 0 0 1px rgba(202,255,51,0.15), 0 0 30px rgba(202,255,51,0.03); }
+    .glow-btn { box-shadow: 0 0 20px rgba(202,255,51,0.3), inset 0 1px 0 rgba(255,255,255,0.1); }
+    .glow-btn:hover { box-shadow: 0 0 30px rgba(202,255,51,0.5), inset 0 1px 0 rgba(255,255,255,0.15); }
+
+    .glass { background: rgba(30,30,36,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
+    .glass-strong { background: rgba(22,22,28,0.95); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.08); }
+
+    .sidebar-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
+
+    .sidebar-left { position: absolute; left: 0; top: 0; bottom: 0; width: 280px; z-index: 50; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .sidebar-left.open { transform: translateX(0); }
+
+    .sidebar-right { position: absolute; right: 0; top: 0; bottom: 0; width: 320px; z-index: 50; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .sidebar-right.open { transform: translateX(0); }
+
+    .editor-area { font-family: 'JetBrains Mono', monospace; tab-size: 4; line-height: 1.65; }
+
+    .line-number { min-width: 48px; text-align: right; padding-right: 16px; user-select: none; color: rgba(255,255,255,0.18); font-size: inherit; }
+    .line-number.active-ln { color: rgba(202,255,51,0.7); }
+
+    .code-line { white-space: pre; min-height: 1.65em; }
+
+    /* Syntax colors */
+    .syn-kw { color: #c792ea; font-weight: 600; }
+    .syn-type { color: #82aaff; }
+    .syn-fn { color: #caff33; }
+    .syn-str { color: #c3e88d; }
+    .syn-num { color: #f78c6c; }
+    .syn-cmt { color: #616175; font-style: italic; }
+    .syn-pre { color: #ff5572; }
+    .syn-op { color: #89ddff; }
+    .syn-punc { color: #89ddff; }
+    .syn-def { color: #e2e8f0; }
+
+    .cursor-line { background: rgba(202,255,51,0.04); }
+
+    textarea.code-input {
+      position: absolute; inset: 0; opacity: 0; font-family: 'JetBrains Mono', monospace;
+      font-size: inherit; line-height: 1.65; padding: 16px 16px 16px 64px; tab-size: 4;
+      resize: none; z-index: 2; caret-color: #caff33; color: transparent; background: transparent;
+      border: none; outline: none; white-space: pre; overflow: auto;
+    }
+
+    .output-text { font-family: 'JetBrains Mono', monospace; white-space: pre-wrap; word-break: break-all; }
+
+    @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .compiling-dot { animation: pulse-dot 0.6s ease-in-out infinite; }
+    .compiling-dot:nth-child(2) { animation-delay: 0.15s; }
+    .compiling-dot:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .anim-slide { animation: slideUp 0.3s ease-out; }
+
+    .file-item { transition: all 0.15s ease; }
+    .file-item:hover { background: rgba(202,255,51,0.08); }
+    .file-item.active { background: rgba(202,255,51,0.12); border-left: 2px solid #caff33; }
+
+    .tab-item { transition: all 0.15s ease; position: relative; }
+    .tab-item.active { background: rgba(202,255,51,0.1); }
+    .tab-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: #caff33; }
+
+    .toast-msg {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 200; padding: 10px 20px; border-radius: 8px; font-size: 13px;
+      animation: slideUp 0.3s ease-out;
+      pointer-events: none;
+    }
+
+    .resize-handle {
+      height: 6px; cursor: ns-resize; position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .resize-handle:hover { background: rgba(202,255,51,0.15); }
+    .resize-handle::after { content: ''; width: 40px; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.15); }
+
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* Mobile */
+    @media (max-width: 640px) {
+      .sidebar-left { width: 260px; }
+      .sidebar-right { width: 100%; }
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/wa-sqlite@3/dist/wa-sqlite-async.wasm"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/emscripten-core@3.1.27/dist/emscripten.min.js"></script>
+ </head>
+ <body class="h-full" style="background: #0e0e12; color: #e2e8f0; font-family: 'Outfit', sans-serif;">
+  <div id="app-root" class="flex flex-col h-full overflow-hidden"><!-- HEADER -->
+   <header class="glass-strong flex items-center justify-between px-3 sm:px-5 py-2 shrink-0" style="z-index: 30; border-bottom: 1px solid rgba(255,255,255,0.06);">
+    <div class="flex items-center gap-2 sm:gap-3"><button id="btn-files" class="p-2 rounded-lg hover:bg-white/5 transition-colors" aria-label="Toggle file explorer"> <i data-lucide="panel-left" style="width:18px;height:18px;color:#caff33;"></i> </button>
+     <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #caff33, #7acc00);"><i data-lucide="terminal" style="width:15px;height:15px;color:#0e0e12;"></i>
+      </div><span id="app-title-text" class="font-display font-bold text-sm sm:text-base tracking-tight" style="color:#caff33;">CForge</span>
+     </div>
+    </div>
+    <div class="flex items-center gap-1 sm:gap-2"><button id="btn-run" class="glow-btn flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg font-display font-semibold text-xs sm:text-sm transition-all" style="background: linear-gradient(135deg, #caff33, #a8e600); color: #0e0e12;"> <i data-lucide="play" style="width:14px;height:14px;"></i> <span class="hidden sm:inline">Run</span> </button> <button id="btn-format" class="p-2 rounded-lg hover:bg-white/5 transition-colors" title="Format Code" aria-label="Format code"> <i data-lucide="sparkles" style="width:16px;height:16px;color:#82aaff;"></i> </button> <button id="btn-download" class="p-2 rounded-lg hover:bg-white/5 transition-colors" title="Download" aria-label="Download file"> <i data-lucide="download" style="width:16px;height:16px;color:#e2e8f0;"></i> </button> <button id="btn-settings" class="p-2 rounded-lg hover:bg-white/5 transition-colors" aria-label="Open settings"> <i data-lucide="settings" style="width:16px;height:16px;color:#e2e8f0;"></i> </button>
+    </div>
+   </header><!-- TAB BAR -->
+   <div id="tab-bar" class="flex items-center gap-0 px-1 shrink-0 overflow-x-auto" style="background: rgba(18,18,22,0.9); border-bottom: 1px solid rgba(255,255,255,0.04); min-height: 36px;">
+   </div><!-- MAIN CONTENT -->
+   <div id="main-wrapper" class="flex-1 flex flex-col relative overflow-hidden" style="min-height: 0;"><!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div><!-- LEFT SIDEBAR: Files -->
+    <aside id="sidebar-files" class="sidebar-left glass-strong">
+     <div class="flex items-center justify-between p-4 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.06);"><span class="font-display font-semibold text-xs uppercase tracking-widest" style="color: rgba(255,255,255,0.4);">Explorer</span> <button id="btn-new-file" class="p-1.5 rounded-md hover:bg-white/10 transition-colors" aria-label="New file"> <i data-lucide="file-plus" style="width:15px;height:15px;color:#caff33;"></i> </button>
+     </div>
+     <div id="file-list" class="py-2 overflow-y-auto" style="max-height: calc(100% - 56px);"></div>
+    </aside><!-- RIGHT SIDEBAR: Settings -->
+    <aside id="sidebar-settings" class="sidebar-right glass-strong overflow-y-auto">
+     <div class="flex items-center justify-between p-4 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.06);"><span class="font-display font-semibold text-xs uppercase tracking-widest" style="color: rgba(255,255,255,0.4);">Settings</span> <button id="btn-close-settings" class="p-1.5 rounded-md hover:bg-white/10 transition-colors" aria-label="Close settings"> <i data-lucide="x" style="width:15px;height:15px;color:#e2e8f0;"></i> </button>
+     </div>
+     <div class="p-4 space-y-5"><!-- Font Size -->
+      <div><label class="block text-xs font-display font-medium mb-2" style="color:rgba(255,255,255,0.5);">Font Size</label>
+       <div class="flex items-center gap-3"><input id="set-fontsize" type="range" min="11" max="24" value="14" class="flex-1 accent-[#caff33]"> <span id="fontsize-val" class="text-xs font-mono" style="color:#caff33; min-width: 30px;">14px</span>
+       </div>
+      </div><!-- Font Family -->
+      <div><label class="block text-xs font-display font-medium mb-2" style="color:rgba(255,255,255,0.5);">Font Family</label> <select id="set-fontfamily" class="w-full px-3 py-2 rounded-lg text-sm font-mono" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); color:#e2e8f0; outline:none;"> <option value="'JetBrains Mono', monospace">JetBrains Mono</option> <option value="'Fira Code', monospace">Fira Code</option> <option value="'Source Code Pro', monospace">Source Code Pro</option> <option value="'Cascadia Code', monospace">Cascadia Code</option> <option value="monospace">System Mono</option> </select>
+      </div><!-- Theme -->
+      <div><label class="block text-xs font-display font-medium mb-2" style="color:rgba(255,255,255,0.5);">Theme</label>
+       <div class="flex gap-2"><button class="theme-btn flex-1 px-3 py-2 rounded-lg text-xs font-display font-medium transition-all" data-theme="dark" style="background:rgba(202,255,51,0.12); color:#caff33; border:1px solid rgba(202,255,51,0.3);">Dark</button> <button class="theme-btn flex-1 px-3 py-2 rounded-lg text-xs font-display font-medium transition-all" data-theme="light" style="background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.5); border:1px solid rgba(255,255,255,0.08);">Light</button>
+       </div>
+      </div><!-- Line Numbers -->
+      <div class="flex items-center justify-between"><span class="text-xs font-display font-medium" style="color:rgba(255,255,255,0.5);">Line Numbers</span> <button id="toggle-linenums" class="w-10 h-5 rounded-full relative transition-all" style="background:#caff33;" aria-label="Toggle line numbers"> <span class="absolute top-0.5 w-4 h-4 rounded-full transition-all" style="background:#0e0e12; left: calc(100% - 18px);"></span> </button>
+      </div><!-- Word Wrap -->
+      <div class="flex items-center justify-between"><span class="text-xs font-display font-medium" style="color:rgba(255,255,255,0.5);">Word Wrap</span> <button id="toggle-wordwrap" class="w-10 h-5 rounded-full relative transition-all" style="background:rgba(255,255,255,0.15);" aria-label="Toggle word wrap"> <span class="absolute top-0.5 w-4 h-4 rounded-full transition-all" style="background:#e2e8f0; left: 2px;"></span> </button>
+      </div><!-- Auto Save -->
+      <div class="flex items-center justify-between"><span class="text-xs font-display font-medium" style="color:rgba(255,255,255,0.5);">Auto Save</span> <button id="toggle-autosave" class="w-10 h-5 rounded-full relative transition-all" style="background:#caff33;" aria-label="Toggle auto save"> <span class="absolute top-0.5 w-4 h-4 rounded-full transition-all" style="background:#0e0e12; left: calc(100% - 18px);"></span> </button>
+      </div>
+     </div>
+    </aside><!-- EDITOR SECTION -->
+    <div id="editor-section" class="flex-1 relative overflow-hidden" style="min-height: 120px;">
+     <div id="editor-scroll" class="absolute inset-0 overflow-auto" style="background: #12121a;">
+      <div id="editor-display" class="editor-area p-4 pl-0" style="font-size: 14px;"></div><textarea id="code-input" class="code-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="Code editor"></textarea>
+      <div id="autocomplete-popup" class="hidden absolute bg-slate-900 border border-slate-700 rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto" style="min-width:180px;">
+       <div id="autocomplete-list"></div>
+      </div>
+     </div>
+    </div><!-- RESIZE HANDLE -->
+    <div id="resize-handle" class="resize-handle shrink-0" style="background: rgba(18,18,22,0.9); border-top: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06);"></div><!-- OUTPUT PANEL -->
+    <div id="output-section" class="shrink-0 flex flex-col" style="height: 200px; min-height: 80px; background: #0a0a0f;">
+     <div class="flex items-center justify-between px-4 py-2 shrink-0" style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <div class="flex items-center gap-2"><i data-lucide="terminal" style="width:13px;height:13px;color:#caff33;"></i> <span class="font-display font-semibold text-xs uppercase tracking-wider" style="color:rgba(255,255,255,0.4);">Output</span>
+       <div id="compile-status" class="hidden items-center gap-1 ml-2"><span class="compiling-dot w-1.5 h-1.5 rounded-full" style="background:#caff33;"></span> <span class="compiling-dot w-1.5 h-1.5 rounded-full" style="background:#caff33;"></span> <span class="compiling-dot w-1.5 h-1.5 rounded-full" style="background:#caff33;"></span> <span class="text-xs font-display ml-1" style="color:rgba(202,255,51,0.7);">Compiling...</span>
+       </div>
+      </div><button id="btn-clear-output" class="p-1 rounded hover:bg-white/5 transition-colors" aria-label="Clear output"> <i data-lucide="trash-2" style="width:13px;height:13px;color:rgba(255,255,255,0.3);"></i> </button>
+     </div>
+     <div id="output-content" class="flex-1 overflow-auto p-4">
+      <div class="output-text text-xs" style="color: rgba(255,255,255,0.3);"><span style="color:#caff33;">⚡</span> <span id="welcome-msg-text">Ready to compile. Press Run or Ctrl+Enter.</span>
+      </div>
+     </div>
+    </div>
+   </div><!-- STATUS BAR -->
+   <footer class="flex items-center justify-between px-3 sm:px-4 py-1 shrink-0 text-xs" style="background: rgba(14,14,18,0.95); border-top: 1px solid rgba(255,255,255,0.04); color: rgba(255,255,255,0.3); font-family: 'JetBrains Mono', monospace; font-size: 10px;">
+    <div class="flex items-center gap-3">
+     <div class="flex items-center gap-1.5">
+      <div id="status-dot" class="status-dot" style="background:#caff33;"></div><span id="status-text">Ready</span>
+     </div><span id="active-file-status">main.c</span>
+    </div>
+    <div class="flex items-center gap-3"><span id="cursor-pos">Ln 1, Col 1</span> <span>C (GCC)</span>
+    </div>
+   </footer>
+  </div><!-- Toast Container -->
+  <div id="toast-container"></div><!-- Inline New-File Prompt -->
+  <div id="newfile-prompt" class="hidden" style="position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);">
+   <div class="glass-strong rounded-xl p-5 w-80 anim-slide" style="border:1px solid rgba(202,255,51,0.15);">
+    <p class="font-display font-semibold text-sm mb-3" style="color:#caff33;">New File</p><input id="newfile-input" type="text" placeholder="filename.c" class="w-full px-3 py-2 rounded-lg text-sm font-mono mb-3" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#e2e8f0;outline:none;">
+    <div class="flex gap-2 justify-end"><button id="newfile-cancel" class="px-3 py-1.5 rounded-lg text-xs font-display" style="color:rgba(255,255,255,0.5);">Cancel</button> <button id="newfile-ok" class="px-4 py-1.5 rounded-lg text-xs font-display font-semibold" style="background:#caff33;color:#0e0e12;">Create</button>
+    </div>
+   </div>
+  </div><!-- Delete Confirm Inline -->
+  <div id="delete-prompt" class="hidden" style="position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);">
+   <div class="glass-strong rounded-xl p-5 w-80 anim-slide" style="border:1px solid rgba(255,85,114,0.2);">
+    <p class="font-display font-semibold text-sm mb-1" style="color:#ff5572;">Delete File</p>
+    <p id="delete-msg" class="text-xs mb-4" style="color:rgba(255,255,255,0.5);"></p>
+    <div class="flex gap-2 justify-end"><button id="delete-cancel" class="px-3 py-1.5 rounded-lg text-xs font-display" style="color:rgba(255,255,255,0.5);">Cancel</button> <button id="delete-ok" class="px-4 py-1.5 rounded-lg text-xs font-display font-semibold" style="background:#ff5572;color:#fff;">Delete</button>
+    </div>
+   </div>
+  </div>
+  <script>
+// ─── STATE ──────────────────────────────────────────────
+const DEFAULT_CODE = `#include <stdio.h>
+
+int main() {
+    printf("Hello, World!\\n");
+    
+    int a = 10, b = 20;
+    printf("Sum of %d and %d is %d\\n", a, b, a + b);
+    
+    for (int i = 1; i <= 5; i++) {
+        printf("Iteration %d\\n", i);
+    }
+    
+    return 0;
+}`;
+
+let files = { 'main.c': DEFAULT_CODE };
+let activeFile = 'main.c';
+let settings = {
+  fontSize: 14,
+  fontFamily: "'JetBrains Mono', monospace",
+  theme: 'dark',
+  lineNumbers: true,
+  wordWrap: false,
+  autoSave: true
+};
+let deleteTarget = null;
+
+// Load from localStorage
+try {
+  const saved = localStorage.getItem('cforge_files');
+  if (saved) files = JSON.parse(saved);
+  const savedSettings = localStorage.getItem('cforge_settings');
+  if (savedSettings) settings = { ...settings, ...JSON.parse(savedSettings) };
+  const savedActive = localStorage.getItem('cforge_active');
+  if (savedActive && files[savedActive]) activeFile = savedActive;
+} catch(e) {}
+
+// ─── DOM REFS ───────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const codeInput = $('code-input');
+const editorDisplay = $('editor-display');
+const editorScroll = $('editor-scroll');
+const outputContent = $('output-content');
+const compileStatus = $('compile-status');
+const tabBar = $('tab-bar');
+const fileList = $('file-list');
+const sidebarFiles = $('sidebar-files');
+const sidebarSettings = $('sidebar-settings');
+const sidebarOverlay = $('sidebar-overlay');
+
+// ─── SYNTAX HIGHLIGHTING ────────────────────────────────
+const C_KEYWORDS = ['auto','break','case','char','const','continue','default','do','double','else','enum','extern','float','for','goto','if','inline','int','long','register','restrict','return','short','signed','sizeof','static','struct','switch','typedef','union','unsigned','void','volatile','while','_Bool','_Complex','_Imaginary','NULL','true','false','TRUE','FALSE'];
+const C_TYPES = ['int','char','float','double','long','short','void','unsigned','signed','size_t','FILE','bool'];
+const C_STDLIB = ['printf','scanf','fprintf','sprintf','snprintf','malloc','calloc','realloc','free','strlen','strcpy','strncpy','strcat','strcmp','memcpy','memset','fopen','fclose','fread','fwrite','fgets','fputs','puts','gets','getchar','putchar','atoi','atof','atol','exit','abs','rand','srand','sizeof','main'];
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function highlightLine(line) {
+  // Preprocessor directives
+  if (/^\s*#/.test(line)) {
+    return `<span class="syn-pre">${escHtml(line)}</span>`;
+  }
+
+  let result = '';
+  let i = 0;
+  while (i < line.length) {
+    // Single-line comment
+    if (line[i] === '/' && line[i+1] === '/') {
+      result += `<span class="syn-cmt">${escHtml(line.slice(i))}</span>`;
+      break;
+    }
+    // Multi-line comment start (simplified)
+    if (line[i] === '/' && line[i+1] === '*') {
+      const end = line.indexOf('*/', i+2);
+      if (end !== -1) {
+        result += `<span class="syn-cmt">${escHtml(line.slice(i, end+2))}</span>`;
+        i = end + 2;
+        continue;
+      } else {
+        result += `<span class="syn-cmt">${escHtml(line.slice(i))}</span>`;
+        break;
+      }
+    }
+    // Strings
+    if (line[i] === '"') {
+      let j = i + 1;
+      while (j < line.length && !(line[j] === '"' && line[j-1] !== '\\')) j++;
+      result += `<span class="syn-str">${escHtml(line.slice(i, j+1))}</span>`;
+      i = j + 1;
+      continue;
+    }
+    // Char literals
+    if (line[i] === "'") {
+      let j = i + 1;
+      while (j < line.length && !(line[j] === "'" && line[j-1] !== '\\')) j++;
+      result += `<span class="syn-str">${escHtml(line.slice(i, j+1))}</span>`;
+      i = j + 1;
+      continue;
+    }
+    // Numbers
+    if (/[0-9]/.test(line[i]) && (i === 0 || /[^a-zA-Z_]/.test(line[i-1]))) {
+      let j = i;
+      while (j < line.length && /[0-9.xXa-fA-F]/.test(line[j])) j++;
+      result += `<span class="syn-num">${escHtml(line.slice(i, j))}</span>`;
+      i = j;
+      continue;
+    }
+    // Words
+    if (/[a-zA-Z_]/.test(line[i])) {
+      let j = i;
+      while (j < line.length && /[a-zA-Z0-9_]/.test(line[j])) j++;
+      const word = line.slice(i, j);
+      // Check if followed by (
+      const isCall = line[j] === '(';
+      if (C_KEYWORDS.includes(word) && !C_TYPES.includes(word)) {
+        result += `<span class="syn-kw">${escHtml(word)}</span>`;
+      } else if (C_TYPES.includes(word)) {
+        result += `<span class="syn-type">${escHtml(word)}</span>`;
+      } else if (C_STDLIB.includes(word) || isCall) {
+        result += `<span class="syn-fn">${escHtml(word)}</span>`;
+      } else {
+        result += `<span class="syn-def">${escHtml(word)}</span>`;
+      }
+      i = j;
+      continue;
+    }
+    // Operators / punctuation
+    if ('{}[]();,=+-*/<>!&|^%~?:.'.includes(line[i])) {
+      result += `<span class="syn-op">${escHtml(line[i])}</span>`;
+      i++;
+      continue;
+    }
+    result += escHtml(line[i]);
+    i++;
+  }
+  return result;
+}
+
+// ─── EDITOR RENDERING ───────────────────────────────────
+let cursorLine = 0;
+
+function renderEditor() {
+  const code = files[activeFile] || '';
+  const lines = code.split('\n');
+  const showLn = settings.lineNumbers;
+
+  let html = '';
+  for (let i = 0; i < lines.length; i++) {
+    const isCursor = i === cursorLine;
+    html += `<div class="flex ${isCursor ? 'cursor-line' : ''}" style="min-height:1.65em;">`;
+    if (showLn) {
+      html += `<div class="line-number ${isCursor ? 'active-ln' : ''}" style="font-size:inherit;">${i+1}</div>`;
+    }
+    html += `<div class="code-line flex-1" style="${settings.wordWrap ? 'white-space:pre-wrap;word-break:break-all;' : ''}">${highlightLine(lines[i]) || ' '}</div>`;
+    html += `</div>`;
+  }
+  editorDisplay.innerHTML = html;
+}
+
+function syncScroll() {
+  codeInput.scrollTop = editorScroll.scrollTop;
+  codeInput.scrollLeft = editorScroll.scrollLeft;
+}
+
+editorScroll.addEventListener('scroll', () => {
+  codeInput.style.top = -editorScroll.scrollTop + 'px';
+  codeInput.style.left = -editorScroll.scrollLeft + 'px';
+});
+
+codeInput.addEventListener('input', () => {
+  files[activeFile] = codeInput.value;
+  updateCursorLine();
+  renderEditor();
+  autoSave();
+  showAutocomplete();
+});
+
+codeInput.addEventListener('click', () => { updateCursorLine(); renderEditor(); hideAutocomplete(); });
+codeInput.addEventListener('keyup', (e) => {
+  updateCursorLine();
+  renderEditor();
+  updateCursorPos();
+  if (e.key !== 'Enter' && e.key !== 'Escape' && !['ArrowUp','ArrowDown'].includes(e.key)) {
+    showAutocomplete();
+  }
+});
+
+codeInput.addEventListener('keydown', (e) => {
+  // Tab support
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const start = codeInput.selectionStart;
+    const end = codeInput.selectionEnd;
+    codeInput.value = codeInput.value.substring(0, start) + '    ' + codeInput.value.substring(end);
+    codeInput.selectionStart = codeInput.selectionEnd = start + 4;
+    files[activeFile] = codeInput.value;
+    renderEditor();
+    autoSave();
+    showAutocomplete();
+    return;
+  }
+  // Arrow keys for autocomplete navigation
+  const autocompletePopup = $('autocomplete-popup');
+  if (!autocompletePopup.classList.contains('hidden')) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      navigateAutocomplete(1);
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      navigateAutocomplete(-1);
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      selectAutocomplete();
+      return;
+    }
+  }
+  // Escape to hide autocomplete
+  if (e.key === 'Escape') {
+    hideAutocomplete();
+  }
+  // Ctrl+Enter to run
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    runCode();
+  }
+  // Ctrl+S to save
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    saveFiles();
+    showToast('Saved!', '#caff33');
+  }
+});
+
+function updateCursorLine() {
+  const val = codeInput.value.substring(0, codeInput.selectionStart);
+  cursorLine = val.split('\n').length - 1;
+}
+
+function updateCursorPos() {
+  const val = codeInput.value.substring(0, codeInput.selectionStart);
+  const lines = val.split('\n');
+  const ln = lines.length;
+  const col = lines[lines.length - 1].length + 1;
+  $('cursor-pos').textContent = `Ln ${ln}, Col ${col}`;
+}
+
+// ─── AUTOCOMPLETE ───────────────────────────────────────
+let autocompleteIndex = -1;
+const AUTOCOMPLETE_DB = {
+  // Printf variants
+  'printf': { label: 'printf', template: 'printf("")' },
+  'sprintf': { label: 'sprintf', template: 'sprintf(str, "")' },
+  'fprintf': { label: 'fprintf', template: 'fprintf(file, "")' },
+  // Scanf variants
+  'scanf': { label: 'scanf', template: 'scanf("")' },
+  'fscanf': { label: 'fscanf', template: 'fscanf(file, "")' },
+  // String functions
+  'strlen': { label: 'strlen', template: 'strlen(str)' },
+  'strcpy': { label: 'strcpy', template: 'strcpy(dest, src)' },
+  'strcat': { label: 'strcat', template: 'strcat(dest, src)' },
+  'strcmp': { label: 'strcmp', template: 'strcmp(str1, str2)' },
+  'strncpy': { label: 'strncpy', template: 'strncpy(dest, src, n)' },
+  // Memory functions
+  'malloc': { label: 'malloc', template: 'malloc(size)' },
+  'calloc': { label: 'calloc', template: 'calloc(num, size)' },
+  'realloc': { label: 'realloc', template: 'realloc(ptr, size)' },
+  'free': { label: 'free', template: 'free(ptr)' },
+  'memcpy': { label: 'memcpy', template: 'memcpy(dest, src, n)' },
+  'memset': { label: 'memset', template: 'memset(ptr, val, n)' },
+  // File I/O
+  'fopen': { label: 'fopen', template: 'fopen("file", "mode")' },
+  'fclose': { label: 'fclose', template: 'fclose(file)' },
+  'fread': { label: 'fread', template: 'fread(ptr, size, count, file)' },
+  'fwrite': { label: 'fwrite', template: 'fwrite(ptr, size, count, file)' },
+  'fgets': { label: 'fgets', template: 'fgets(str, size, file)' },
+  'fputs': { label: 'fputs', template: 'fputs(str, file)' },
+  // Math functions
+  'abs': { label: 'abs', template: 'abs(x)' },
+  'sqrt': { label: 'sqrt', template: 'sqrt(x)' },
+  'pow': { label: 'pow', template: 'pow(x, y)' },
+  'sin': { label: 'sin', template: 'sin(x)' },
+  'cos': { label: 'cos', template: 'cos(x)' },
+  // Conversion
+  'atoi': { label: 'atoi', template: 'atoi(str)' },
+  'atof': { label: 'atof', template: 'atof(str)' },
+  'atol': { label: 'atol', template: 'atol(str)' },
+  // Keywords
+  'for': { label: 'for', template: 'for (int i = 0; i < n; i++)' },
+  'while': { label: 'while', template: 'while (condition)' },
+  'if': { label: 'if', template: 'if (condition)' },
+  'else': { label: 'else', template: 'else' },
+  'switch': { label: 'switch', template: 'switch (var)' },
+  'return': { label: 'return', template: 'return 0;' }
+};
+
+function getWordAtCursor() {
+  const val = codeInput.value;
+  const pos = codeInput.selectionStart;
+  let start = pos;
+  while (start > 0 && /[a-zA-Z0-9_]/.test(val[start - 1])) start--;
+  return val.substring(start, pos);
+}
+
+function showAutocomplete() {
+  const word = getWordAtCursor();
+  if (word.length < 1) {
+    hideAutocomplete();
+    return;
+  }
+
+  const matches = Object.entries(AUTOCOMPLETE_DB)
+    .filter(([key]) => key.toLowerCase().startsWith(word.toLowerCase()))
+    .slice(0, 12)
+    .map(([key, data]) => data);
+
+  if (matches.length === 0) {
+    hideAutocomplete();
+    return;
+  }
+
+  const popup = $('autocomplete-popup');
+  const list = $('autocomplete-list');
+  list.innerHTML = matches.map((item, i) => `
+    <div class="autocomplete-item px-3 py-2 text-xs cursor-pointer hover:bg-white/10 ${i === 0 ? 'active' : ''}" data-template="${item.template}" style="color:#c3e88d; display:flex; justify-content:space-between; gap:10px;">
+      <span>${item.label}</span>
+      <span style="color:rgba(255,255,255,0.3); font-size:10px;">${item.template}</span>
+    </div>
+  `).join('');
+
+  autocompleteIndex = 0;
+
+  popup.style.left = (codeInput.offsetLeft + 64 + (codeInput.selectionStart * 8.4 - editorScroll.scrollLeft)) + 'px';
+  popup.style.top = (codeInput.offsetTop + 40 + (cursorLine * 26.4 - editorScroll.scrollTop)) + 'px';
+  popup.classList.remove('hidden');
+
+  list.querySelectorAll('.autocomplete-item').forEach(el => {
+    el.addEventListener('click', () => selectAutocompleteByElement(el));
+  });
+}
+
+function hideAutocomplete() {
+  $('autocomplete-popup').classList.add('hidden');
+  autocompleteIndex = -1;
+}
+
+function navigateAutocomplete(dir) {
+  const items = $('autocomplete-list').querySelectorAll('.autocomplete-item');
+  if (items.length === 0) return;
+
+  if (autocompleteIndex >= 0) {
+    items[autocompleteIndex].classList.remove('active');
+  }
+
+  autocompleteIndex += dir;
+  if (autocompleteIndex < 0) autocompleteIndex = items.length - 1;
+  if (autocompleteIndex >= items.length) autocompleteIndex = 0;
+
+  items[autocompleteIndex].classList.add('active');
+  items[autocompleteIndex].scrollIntoView({ block: 'nearest' });
+}
+
+function selectAutocomplete() {
+  const items = $('autocomplete-list').querySelectorAll('.autocomplete-item');
+  if (autocompleteIndex >= 0 && autocompleteIndex < items.length) {
+    selectAutocompleteByElement(items[autocompleteIndex]);
+  }
+}
+
+function selectAutocompleteByElement(el) {
+  const template = el.dataset.template;
+  const word = getWordAtCursor();
+  const val = codeInput.value;
+  const pos = codeInput.selectionStart;
+  const start = pos - word.length;
+
+  codeInput.value = val.substring(0, start) + template + val.substring(pos);
+  
+  // Position cursor inside parentheses for functions with parameters
+  const cursorPos = template.indexOf('(') + 1;
+  if (cursorPos > 0 && template.includes(')')) {
+    codeInput.selectionStart = codeInput.selectionEnd = start + cursorPos;
+  } else {
+    codeInput.selectionStart = codeInput.selectionEnd = start + template.length;
+  }
+  
+  files[activeFile] = codeInput.value;
+  renderEditor();
+  hideAutocomplete();
+  autoSave();
+  updateCursorPos();
+}
+function renderFileList() {
+  const names = Object.keys(files);
+  fileList.innerHTML = names.map(name => `
+    <div class="file-item flex items-center gap-2 px-4 py-2 cursor-pointer ${name === activeFile ? 'active' : ''}" data-file="${name}">
+      <i data-lucide="file-code" style="width:14px;height:14px;color:${name === activeFile ? '#caff33' : 'rgba(255,255,255,0.3)'};flex-shrink:0;"></i>
+      <span class="flex-1 text-xs font-mono truncate" style="color:${name === activeFile ? '#caff33' : '#e2e8f0'};">${name}</span>
+      ${names.length > 1 ? `<button class="file-delete p-0.5 rounded hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" data-del="${name}" aria-label="Delete ${name}" style="opacity:0.3;"><i data-lucide="x" style="width:12px;height:12px;"></i></button>` : ''}
+    </div>
+  `).join('');
+  lucide.createIcons();
+
+  fileList.querySelectorAll('.file-item').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.file-delete')) return;
+      switchFile(el.dataset.file);
+    });
+  });
+  fileList.querySelectorAll('.file-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteTarget = btn.dataset.del;
+      $('delete-msg').textContent = `Are you sure you want to delete "${deleteTarget}"?`;
+      $('delete-prompt').style.display = 'flex';
+    });
+  });
+}
+
+function renderTabs() {
+  const names = Object.keys(files);
+  tabBar.innerHTML = names.map(name => `
+    <div class="tab-item flex items-center gap-1.5 px-3 py-1.5 cursor-pointer ${name === activeFile ? 'active' : ''}" data-tab="${name}">
+      <i data-lucide="file-code" style="width:11px;height:11px;color:${name === activeFile ? '#caff33' : 'rgba(255,255,255,0.25)'};"></i>
+      <span class="text-xs font-mono" style="color:${name === activeFile ? '#e2e8f0' : 'rgba(255,255,255,0.4)'};">${name}</span>
+    </div>
+  `).join('');
+  lucide.createIcons();
+
+  tabBar.querySelectorAll('.tab-item').forEach(el => {
+    el.addEventListener('click', () => switchFile(el.dataset.tab));
+  });
+}
+
+function switchFile(name) {
+  if (!files[name]) return;
+  activeFile = name;
+  codeInput.value = files[name];
+  cursorLine = 0;
+  renderEditor();
+  renderFileList();
+  renderTabs();
+  $('active-file-status').textContent = name;
+  localStorage.setItem('cforge_active', name);
+  closeSidebars();
+}
+
+// New file
+$('btn-new-file').addEventListener('click', () => {
+  $('newfile-input').value = '';
+  $('newfile-prompt').classList.remove('hidden');
+  $('newfile-prompt').style.display = 'flex';
+  setTimeout(() => $('newfile-input').focus(), 100);
+});
+
+$('newfile-cancel').addEventListener('click', () => {
+  $('newfile-prompt').classList.add('hidden');
+  $('newfile-prompt').style.display = 'none';
+});
+
+$('newfile-ok').addEventListener('click', createNewFile);
+$('newfile-input').addEventListener('keydown', e => { if (e.key === 'Enter') createNewFile(); if (e.key === 'Escape') { $('newfile-prompt').classList.add('hidden'); $('newfile-prompt').style.display = 'none'; } });
+
+function createNewFile() {
+  let name = $('newfile-input').value.trim();
+  if (!name) return;
+  if (!name.endsWith('.c') && !name.endsWith('.h')) name += '.c';
+  if (files[name]) { showToast('File already exists', '#ff5572'); return; }
+  files[name] = `// ${name}\n#include <stdio.h>\n\nint main() {\n    \n    return 0;\n}\n`;
+  saveFiles();
+  switchFile(name);
+  $('newfile-prompt').classList.add('hidden');
+  $('newfile-prompt').style.display = 'none';
+  showToast(`Created ${name}`, '#caff33');
+}
+
+// Delete file
+$('delete-cancel').addEventListener('click', () => { $('delete-prompt').style.display = 'none'; deleteTarget = null; });
+$('delete-ok').addEventListener('click', () => {
+  if (deleteTarget && files[deleteTarget] && Object.keys(files).length > 1) {
+    delete files[deleteTarget];
+    if (activeFile === deleteTarget) {
+      activeFile = Object.keys(files)[0];
+    }
+    saveFiles();
+    switchFile(activeFile);
+    showToast(`Deleted ${deleteTarget}`, '#ff5572');
+    deleteTarget = null;
+  }
+  $('delete-prompt').style.display = 'none';
+});
+
+// ─── SIDEBARS ───────────────────────────────────────────
+function closeSidebars() {
+  sidebarFiles.classList.remove('open');
+  sidebarSettings.classList.remove('open');
+  sidebarOverlay.classList.remove('active');
+}
+
+$('btn-files').addEventListener('click', () => {
+  const isOpen = sidebarFiles.classList.contains('open');
+  closeSidebars();
+  if (!isOpen) {
+    sidebarFiles.classList.add('open');
+    sidebarOverlay.classList.add('active');
+  }
+});
+
+$('btn-settings').addEventListener('click', () => {
+  const isOpen = sidebarSettings.classList.contains('open');
+  closeSidebars();
+  if (!isOpen) {
+    sidebarSettings.classList.add('open');
+    sidebarOverlay.classList.add('active');
+  }
+});
+
+$('btn-close-settings').addEventListener('click', closeSidebars);
+sidebarOverlay.addEventListener('click', closeSidebars);
+
+// ─── SETTINGS ───────────────────────────────────────────
+function applySettings() {
+  editorDisplay.style.fontSize = settings.fontSize + 'px';
+  codeInput.style.fontSize = settings.fontSize + 'px';
+  editorDisplay.style.fontFamily = settings.fontFamily;
+  codeInput.style.fontFamily = settings.fontFamily;
+  $('set-fontsize').value = settings.fontSize;
+  $('fontsize-val').textContent = settings.fontSize + 'px';
+  $('set-fontfamily').value = settings.fontFamily;
+
+  // Toggle states
+  updateToggle('toggle-linenums', settings.lineNumbers);
+  updateToggle('toggle-wordwrap', settings.wordWrap);
+  updateToggle('toggle-autosave', settings.autoSave);
+
+  // Theme buttons
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    if (btn.dataset.theme === settings.theme) {
+      btn.style.background = 'rgba(202,255,51,0.12)';
+      btn.style.color = '#caff33';
+      btn.style.borderColor = 'rgba(202,255,51,0.3)';
+    } else {
+      btn.style.background = 'rgba(255,255,255,0.05)';
+      btn.style.color = 'rgba(255,255,255,0.5)';
+      btn.style.borderColor = 'rgba(255,255,255,0.08)';
+    }
+  });
+
+  renderEditor();
+}
+
+function updateToggle(id, state) {
+  const btn = $(id);
+  const dot = btn.querySelector('span');
+  if (state) {
+    btn.style.background = '#caff33';
+    dot.style.background = '#0e0e12';
+    dot.style.left = 'calc(100% - 18px)';
+  } else {
+    btn.style.background = 'rgba(255,255,255,0.15)';
+    dot.style.background = '#e2e8f0';
+    dot.style.left = '2px';
+  }
+}
+
+$('set-fontsize').addEventListener('input', e => {
+  settings.fontSize = parseInt(e.target.value);
+  applySettings();
+  saveSettings();
+});
+
+$('set-fontfamily').addEventListener('change', e => {
+  settings.fontFamily = e.target.value;
+  applySettings();
+  saveSettings();
+});
+
+document.querySelectorAll('.theme-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    settings.theme = btn.dataset.theme;
+    applySettings();
+    saveSettings();
+    showToast(`${settings.theme === 'dark' ? 'Dark' : 'Light'} theme applied`, '#caff33');
+  });
+});
+
+$('toggle-linenums').addEventListener('click', () => {
+  settings.lineNumbers = !settings.lineNumbers;
+  applySettings();
+  saveSettings();
+});
+
+$('toggle-wordwrap').addEventListener('click', () => {
+  settings.wordWrap = !settings.wordWrap;
+  applySettings();
+  saveSettings();
+});
+
+$('toggle-autosave').addEventListener('click', () => {
+  settings.autoSave = !settings.autoSave;
+  applySettings();
+  saveSettings();
+});
+
+// ─── SAVE / LOAD ────────────────────────────────────────
+function saveFiles() { try { localStorage.setItem('cforge_files', JSON.stringify(files)); } catch(e) {} }
+function saveSettings() { try { localStorage.setItem('cforge_settings', JSON.stringify(settings)); } catch(e) {} }
+let autoSaveTimer;
+function autoSave() {
+  if (!settings.autoSave) return;
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(saveFiles, 1000);
+}
+
+// ─── COMPILE & RUN ──────────────────────────────────────
+let isCompiling = false;
+
+async function runCode() {
+  if (isCompiling) return;
+  isCompiling = true;
+
+  compileStatus.classList.remove('hidden');
+  compileStatus.style.display = 'flex';
+  $('btn-run').style.opacity = '0.6';
+  $('btn-run').style.pointerEvents = 'none';
+  $('status-dot').style.background = '#f78c6c';
+  $('status-text').textContent = 'Compiling...';
+
+  const code = files[activeFile] || '';
+  const startTime = Date.now();
+
+  // Try multiple APIs in order of reliability
+  const apis = [
+    { name: 'Piston', fn: () => runCodeWithPiston(code, startTime) },
+    { name: 'OneCompiler', fn: () => runCodeWithOneCompiler(code, startTime) },
+    { name: 'TIO', fn: () => runCodeWithTIO(code, startTime) }
+  ];
+
+  for (let api of apis) {
+    try {
+      await api.fn();
+      isCompiling = false;
+      compileStatus.classList.add('hidden');
+      compileStatus.style.display = 'none';
+      $('btn-run').style.opacity = '1';
+      $('btn-run').style.pointerEvents = 'auto';
+      return;
+    } catch (err) {
+      // Try next API
+    }
+  }
+
+  // All APIs failed
+  outputContent.innerHTML = `<div class="output-text text-xs anim-slide"><span style="color:#ff5572;">⚠ Unable to reach compilation service.\n\nPlease check your internet connection and try again.</span></div>`;
+  $('status-dot').style.background = '#ff5572';
+  $('status-text').textContent = 'Error';
+
+  isCompiling = false;
+  compileStatus.classList.add('hidden');
+  compileStatus.style.display = 'none';
+  $('btn-run').style.opacity = '1';
+  $('btn-run').style.pointerEvents = 'auto';
+}
+
+async function runCodeWithPiston(code, startTime) {
+  const response = await fetch('https://emkc.org/api/v2/piston/execute', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      language: 'c',
+      version: '10.2.0',
+      files: [{ name: 'main.c', content: code }],
+      stdin: ''
+    })
+  });
+
+  if (!response.ok) throw new Error('Piston API error');
+
+  const data = await response.json();
+  if (!data || typeof data !== 'object') throw new Error('Invalid response');
+
+  const elapsed = Date.now() - startTime;
+  let output = '';
+  let hasError = false;
+
+  // Check for compilation errors
+  if (data.compile && data.compile.stderr) {
+    const stderr = data.compile.stderr.trim();
+    if (stderr) {
+      output += `<span style="color:#ff5572;">⚠ Compilation Error:\n${escHtml(stderr)}</span>\n`;
+      hasError = true;
+    }
+  }
+
+  // Check for runtime errors
+  if (data.runtime && data.runtime.stderr) {
+    const stderr = data.runtime.stderr.trim();
+    if (stderr) {
+      output += `<span style="color:#ff5572;">⚠ Runtime Error:\n${escHtml(stderr)}</span>\n`;
+      hasError = true;
+    }
+  }
+
+  // Get program output - check multiple possible locations
+  let stdout = '';
+  if (data.run && data.run.stdout) {
+    stdout = data.run.stdout.trim();
+  } else if (data.runtime && data.runtime.stdout) {
+    stdout = data.runtime.stdout.trim();
+  }
+
+  if (stdout) {
+    output += `<span style="color:#c3e88d;">${escHtml(stdout)}</span>\n`;
+  } else if (!hasError) {
+    output = `<span style="color:rgba(255,255,255,0.3);">(program completed with no output)</span>\n`;
+  }
+
+  output += `\n<span style="color:rgba(255,255,255,0.2);">────────────────────────────</span>\n`;
+  output += `<span style="color:rgba(255,255,255,0.25);">⏱ ${elapsed}ms</span>`;
+
+  outputContent.innerHTML = `<div class="output-text text-xs anim-slide">${output}</div>`;
+  $('status-dot').style.background = hasError ? '#ff5572' : '#caff33';
+  $('status-text').textContent = hasError ? 'Error' : 'Success';
+}
+
+async function runCodeWithOneCompiler(code, startTime) {
+  const formData = new FormData();
+  formData.append('code', code);
+  formData.append('language', 'c');
+  formData.append('stdin', '');
+
+  const response = await fetch('https://onecompiler.com/api/code/execute', {
+    method: 'POST',
+    body: formData
+  });
+
+  if (!response.ok) throw new Error('OneCompiler API error');
+
+  const data = await response.json();
+  const elapsed = Date.now() - startTime;
+  let output = '';
+  let hasError = false;
+
+  if (data.stderr && data.stderr.trim()) {
+    output += `<span style="color:#ff5572;">⚠ Error:\n${escHtml(data.stderr)}</span>\n`;
+    hasError = true;
+  }
+
+  if (data.stdout && data.stdout.trim()) {
+    output += `<span style="color:#c3e88d;">${escHtml(data.stdout)}</span>\n`;
+  }
+
+  if (!output.trim()) {
+    output = `<span style="color:rgba(255,255,255,0.3);">(program completed with no output)</span>\n`;
+  }
+
+  output += `\n<span style="color:rgba(255,255,255,0.2);">────────────────────────────</span>\n`;
+  output += `<span style="color:rgba(255,255,255,0.25);">⏱ ${elapsed}ms</span>`;
+
+  outputContent.innerHTML = `<div class="output-text text-xs anim-slide">${output}</div>`;
+  $('status-dot').style.background = hasError ? '#ff5572' : '#caff33';
+  $('status-text').textContent = hasError ? 'Error' : 'Success';
+}
+
+async function runCodeWithTIO(code, startTime) {
+  const payload = {
+    'lang': ['c'],
+    'code': [code],
+    'args': [[]],
+    'TIO_cURL_H2': ['1']
+  };
+
+  const response = await fetch('https://tio.run/cgi-bin/run/api/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(payload).toString()
+  });
+
+  if (!response.ok) throw new Error('TIO API error');
+
+  const text = await response.text();
+  const elapsed = Date.now() - startTime;
+  let output = '';
+  let hasError = false;
+
+  // TIO returns output directly
+  if (text.trim()) {
+    // Check if it looks like an error (heuristic)
+    if (text.includes('error:') || text.includes('undefined reference')) {
+      output += `<span style="color:#ff5572;">⚠ Compilation Error:\n${escHtml(text)}</span>\n`;
+      hasError = true;
+    } else {
+      output += `<span style="color:#c3e88d;">${escHtml(text)}</span>\n`;
+    }
+  } else {
+    output = `<span style="color:rgba(255,255,255,0.3);">(program completed with no output)</span>\n`;
+  }
+
+  output += `\n<span style="color:rgba(255,255,255,0.2);">────────────────────────────</span>\n`;
+  output += `<span style="color:rgba(255,255,255,0.25);">⏱ ${elapsed}ms</span>`;
+
+  outputContent.innerHTML = `<div class="output-text text-xs anim-slide">${output}</div>`;
+  $('status-dot').style.background = hasError ? '#ff5572' : '#caff33';
+  $('status-text').textContent = hasError ? 'Error' : 'Success';
+}
+
+$('btn-run').addEventListener('click', runCode);
+
+// ─── FORMAT CODE ────────────────────────────────────────
+function formatCode() {
+  let code = files[activeFile] || '';
+  // Basic C formatting
+  let indent = 0;
+  const lines = code.split('\n');
+  const formatted = [];
+  for (let line of lines) {
+    let trimmed = line.trim();
+    if (!trimmed) { formatted.push(''); continue; }
+    if (trimmed.startsWith('}')) indent = Math.max(0, indent - 1);
+    formatted.push('    '.repeat(indent) + trimmed);
+    if (trimmed.endsWith('{') && !trimmed.startsWith('//') && !trimmed.startsWith('/*')) indent++;
+  }
+  files[activeFile] = formatted.join('\n');
+  codeInput.value = files[activeFile];
+  renderEditor();
+  saveFiles();
+  showToast('Code formatted', '#82aaff');
+}
+
+$('btn-format').addEventListener('click', formatCode);
+
+// ─── DOWNLOAD ───────────────────────────────────────────
+$('btn-download').addEventListener('click', () => {
+  const code = files[activeFile] || '';
+  const blob = new Blob([code], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = activeFile;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`Downloaded ${activeFile}`, '#caff33');
+});
+
+// ─── CLEAR OUTPUT ───────────────────────────────────────
+$('btn-clear-output').addEventListener('click', () => {
+  outputContent.innerHTML = `<div class="output-text text-xs" style="color: rgba(255,255,255,0.3);"><span style="color:#caff33;">⚡</span> Output cleared. Press Run to compile.</div>`;
+});
+
+// ─── RESIZE HANDLE ──────────────────────────────────────
+const resizeHandle = $('resize-handle');
+const editorSection = $('editor-section');
+const outputSection = $('output-section');
+let isResizing = false;
+
+resizeHandle.addEventListener('mousedown', startResize);
+resizeHandle.addEventListener('touchstart', startResize, { passive: false });
+
+function startResize(e) {
+  e.preventDefault();
+  isResizing = true;
+  document.body.style.cursor = 'ns-resize';
+  document.body.style.userSelect = 'none';
+  document.addEventListener('mousemove', doResize);
+  document.addEventListener('mouseup', stopResize);
+  document.addEventListener('touchmove', doResize, { passive: false });
+  document.addEventListener('touchend', stopResize);
+}
+
+function doResize(e) {
+  if (!isResizing) return;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  const wrapper = $('main-wrapper');
+  const rect = wrapper.getBoundingClientRect();
+  const newEditorH = clientY - rect.top;
+  const minEditor = 120;
+  const minOutput = 80;
+  const totalH = rect.height - resizeHandle.offsetHeight;
+  const clampedEditor = Math.min(Math.max(newEditorH, minEditor), totalH - minOutput);
+  editorSection.style.flex = 'none';
+  editorSection.style.height = clampedEditor + 'px';
+  outputSection.style.flex = 'none';
+  outputSection.style.height = (totalH - clampedEditor) + 'px';
+}
+
+function stopResize() {
+  isResizing = false;
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+  document.removeEventListener('mousemove', doResize);
+  document.removeEventListener('mouseup', stopResize);
+  document.removeEventListener('touchmove', doResize);
+  document.removeEventListener('touchend', stopResize);
+}
+
+// ─── TOAST ──────────────────────────────────────────────
+function showToast(msg, color) {
+  const toast = document.createElement('div');
+  toast.className = 'toast-msg font-display';
+  toast.style.background = color || '#caff33';
+  toast.style.color = color === '#ff5572' ? '#fff' : '#0e0e12';
+  toast.textContent = msg;
+  $('toast-container').appendChild(toast);
+  setTimeout(() => toast.remove(), 2200);
+}
+
+// ─── ELEMENT SDK ────────────────────────────────────────
+const defaultConfig = {
+  app_title: 'CForge',
+  welcome_message: 'Ready to compile. Press Run or Ctrl+Enter.',
+  background_color: '#0e0e12',
+  surface_color: '#12121a',
+  text_color: '#e2e8f0',
+  accent_color: '#caff33',
+  secondary_action_color: '#82aaff',
+  font_family: 'Outfit',
+  font_size: 14
+};
+
+function applyConfig(config) {
+  const title = config.app_title || defaultConfig.app_title;
+  const welcome = config.welcome_message || defaultConfig.welcome_message;
+  const bg = config.background_color || defaultConfig.background_color;
+  const surface = config.surface_color || defaultConfig.surface_color;
+  const text = config.text_color || defaultConfig.text_color;
+  const accent = config.accent_color || defaultConfig.accent_color;
+  const secondary = config.secondary_action_color || defaultConfig.secondary_action_color;
+  const font = config.font_family || defaultConfig.font_family;
+  const fontSize = config.font_size || defaultConfig.font_size;
+
+  const titleEl = $('app-title-text');
+  if (titleEl) titleEl.textContent = title;
+
+  const welcomeEl = $('welcome-msg-text');
+  if (welcomeEl) welcomeEl.textContent = welcome;
+
+  document.body.style.background = bg;
+  document.body.style.color = text;
+  document.body.style.fontFamily = `${font}, Outfit, sans-serif`;
+
+  const editorBg = $('editor-scroll');
+  if (editorBg) editorBg.style.background = surface;
+
+  // Apply font size to body text
+  const baseSize = fontSize;
+  document.querySelectorAll('.font-display').forEach(el => {
+    if (!el.closest('.editor-area') && !el.closest('.output-text')) {
+      // Keep relative sizing
+    }
+  });
+}
+
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => { applyConfig(config); },
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+        { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+        { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+        { get: () => config.accent_color || defaultConfig.accent_color, set: (v) => { config.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); } },
+        { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } }
+      ],
+      borderables: [],
+      fontEditable: {
+        get: () => config.font_family || defaultConfig.font_family,
+        set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+      },
+      fontSizeable: {
+        get: () => config.font_size || defaultConfig.font_size,
+        set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+      }
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['app_title', config.app_title || defaultConfig.app_title],
+      ['welcome_message', config.welcome_message || defaultConfig.welcome_message]
+    ])
+  });
+}
+
+// ─── INIT ───────────────────────────────────────────────
+codeInput.value = files[activeFile];
+renderEditor();
+renderFileList();
+renderTabs();
+applySettings();
+lucide.createIcons();
+updateCursorPos();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e04f4d7e355ff97',t:'MTc3NDE3OTk5Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
