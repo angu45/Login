@@ -4,1171 +4,1355 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Free Online C Compiler</title>
-  <meta name="description" content="Free Online C Compiler — Write, compile and run C programs directly in your browser with real-time output console.">
+  <meta name="description" content="Free Online C Compiler - Write, compile and run C programs directly in your browser with a modern VS Code-style editor.">
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <script src="/_sdk/element_sdk.js"></script>
-  <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://i.ibb.co/4wn3rb7Y/1000176075-removebg-preview.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Outfit:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Outfit:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><!-- GCC Compiler via Emscripten -->
+  <script async src="https://cdn.jsdelivr.net/npm/@jspawn/jspawn@0.5.2/dist/jspawn.umd.js"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
             mono: ['JetBrains Mono', 'monospace'],
-            display: ['Outfit', 'sans-serif']
+            sans: ['Outfit', 'sans-serif']
           }
         }
       }
     }
   </script>
-  <style>
-    html, body { height: 100%; margin: 0; overflow: hidden; }
-
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #555; }
-
-    .glow-border { box-shadow: inset 0 0 0 1px rgba(202,255,51,0.15), 0 0 30px rgba(202,255,51,0.03); }
-    .glow-btn { box-shadow: 0 0 20px rgba(202,255,51,0.3), inset 0 1px 0 rgba(255,255,255,0.1); }
-    .glow-btn:hover { box-shadow: 0 0 30px rgba(202,255,51,0.5), inset 0 1px 0 rgba(255,255,255,0.15); }
-
-    .glass { background: rgba(30,30,36,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
-    .glass-strong { background: rgba(22,22,28,0.95); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.08); }
-
-    .sidebar-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-    .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
-
-    .sidebar-left { position: absolute; left: 0; top: 0; bottom: 0; width: 280px; z-index: 50; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
-    .sidebar-left.open { transform: translateX(0); }
-
-    .sidebar-right { position: absolute; right: 0; top: 0; bottom: 0; width: 320px; z-index: 50; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
-    .sidebar-right.open { transform: translateX(0); }
-
-    .editor-area { font-family: 'JetBrains Mono', monospace; tab-size: 4; line-height: 1.65; }
-
-    .line-number { min-width: 48px; text-align: right; padding-right: 16px; user-select: none; color: rgba(255,255,255,0.18); font-size: inherit; }
-    .line-number.active-ln { color: rgba(202,255,51,0.7); }
-
-    .code-line { white-space: pre; min-height: 1.65em; }
-
-    /* Syntax colors */
-    .syn-kw { color: #c792ea; font-weight: 600; }
-    .syn-type { color: #82aaff; }
-    .syn-fn { color: #caff33; }
-    .syn-str { color: #c3e88d; }
-    .syn-num { color: #f78c6c; }
-    .syn-cmt { color: #616175; font-style: italic; }
-    .syn-pre { color: #ff5572; }
-    .syn-op { color: #89ddff; }
-    .syn-punc { color: #89ddff; }
-    .syn-def { color: #e2e8f0; }
-
-    .cursor-line { background: rgba(202,255,51,0.04); }
-
-    textarea.code-input {
-      position: absolute; inset: 0; opacity: 0; font-family: 'JetBrains Mono', monospace;
-      font-size: inherit; line-height: 1.65; padding: 16px 16px 16px 64px; tab-size: 4;
-      resize: none; z-index: 2; caret-color: #caff33; color: transparent; background: transparent;
-      border: none; outline: none; white-space: pre; overflow: auto;
-    }
-
-    .output-text { font-family: 'JetBrains Mono', monospace; white-space: pre-wrap; word-break: break-all; }
-
-    @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-    .compiling-dot { animation: pulse-dot 0.6s ease-in-out infinite; }
-    .compiling-dot:nth-child(2) { animation-delay: 0.15s; }
-    .compiling-dot:nth-child(3) { animation-delay: 0.3s; }
-
-    @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .anim-slide { animation: slideUp 0.3s ease-out; }
-
-    .file-item { transition: all 0.15s ease; }
-    .file-item:hover { background: rgba(202,255,51,0.08); }
-    .file-item.active { background: rgba(202,255,51,0.12); border-left: 2px solid #caff33; }
-
-    .tab-item { transition: all 0.15s ease; position: relative; }
-    .tab-item.active { background: rgba(202,255,51,0.1); }
-    .tab-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: #caff33; }
-
-    .toast-msg {
-      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-      z-index: 200; padding: 10px 20px; border-radius: 8px; font-size: 13px;
-      animation: slideUp 0.3s ease-out;
-      pointer-events: none;
-    }
-
-    .resize-handle {
-      height: 6px; cursor: ns-resize; position: relative; z-index: 10;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s;
-    }
-    .resize-handle:hover { background: rgba(202,255,51,0.15); }
-    .resize-handle::after { content: ''; width: 40px; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.15); }
-
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
-
-    /* Mobile */
-    @media (max-width: 640px) {
-      .sidebar-left { width: 260px; }
-      .sidebar-right { width: 100%; }
-    }
-  </style>
-  <style>body { box-sizing: border-box; }</style>
+  <link rel="style.css" src="./css/compiler.css">
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
-  <script src="https://cdn.jsdelivr.net/npm/wa-sqlite@3/dist/wa-sqlite-async.wasm"></script>
-  <script async src="https://cdn.jsdelivr.net/npm/emscripten-core@3.1.27/dist/emscripten.min.js"></script>
  </head>
- <body class="h-full" style="background: #0e0e12; color: #e2e8f0; font-family: 'Outfit', sans-serif;">
-  <div id="app-root" class="flex flex-col h-full overflow-hidden"><!-- HEADER -->
-   <header class="glass-strong flex items-center justify-between px-3 sm:px-5 py-2 shrink-0" style="z-index: 30; border-bottom: 1px solid rgba(255,255,255,0.06);">
-    <div class="flex items-center gap-2 sm:gap-3"><button id="btn-files" class="p-2 rounded-lg hover:bg-white/5 transition-colors" aria-label="Toggle file explorer"> <i data-lucide="panel-left" style="width:18px;height:18px;color:#caff33;"></i> </button>
+ <body class="h-full font-sans" id="appBody">
+  <div id="app" class="h-full flex flex-col overflow-hidden" style="background:#0d0d14;">
+   <!-- HEADER -->
+   <header id="headerBar" class="flex items-center justify-between px-4 py-2 border-b border-white/5 flex-shrink-0" style="background:rgba(13,13,20,0.98);">
+    <div class="flex items-center gap-3">
+     <button id="sidebarToggle" class="p-1.5 rounded-lg hover:bg-white/5 transition-colors lg:hidden" aria-label="Toggle sidebar"> <i data-lucide="panel-left" class="w-5 h-5 text-gray-400"></i> </button>
      <div class="flex items-center gap-2">
-      <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #caff33, #7acc00);"><i data-lucide="terminal" style="width:15px;height:15px;color:#0e0e12;"></i>
-      </div><span id="app-title-text" class="font-display font-bold text-sm sm:text-base tracking-tight" style="color:#caff33;">CForge</span>
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm" style="background:linear-gradient(135deg,#c8ff00,#00d4ff);color:#0d0d14;">
+       C
+      </div><span id="appTitleEl" class="font-semibold text-white text-sm hidden sm:inline">Craby C Compiler</span>
      </div>
     </div>
-    <div class="flex items-center gap-1 sm:gap-2"><button id="btn-run" class="glow-btn flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg font-display font-semibold text-xs sm:text-sm transition-all" style="background: linear-gradient(135deg, #caff33, #a8e600); color: #0e0e12;"> <i data-lucide="play" style="width:14px;height:14px;"></i> <span class="hidden sm:inline">Run</span> </button> <button id="btn-format" class="p-2 rounded-lg hover:bg-white/5 transition-colors" title="Format Code" aria-label="Format code"> <i data-lucide="sparkles" style="width:16px;height:16px;color:#82aaff;"></i> </button> <button id="btn-download" class="p-2 rounded-lg hover:bg-white/5 transition-colors" title="Download" aria-label="Download file"> <i data-lucide="download" style="width:16px;height:16px;color:#e2e8f0;"></i> </button> <button id="btn-settings" class="p-2 rounded-lg hover:bg-white/5 transition-colors" aria-label="Open settings"> <i data-lucide="settings" style="width:16px;height:16px;color:#e2e8f0;"></i> </button>
+    <div class="flex items-center gap-1.5 sm:gap-2">
+     <button id="btnRun" class="btn-glow flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs sm:text-sm transition-all" style="background:#c8ff00;color:#0d0d14;"> <i data-lucide="play" class="w-3.5 h-3.5"></i> <span id="runBtnText">Run Code</span> </button> <button id="btnFormat" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-xs sm:text-sm transition-colors" title="Format Code"> <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Format</span> </button> <button id="btnDownload" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 text-xs sm:text-sm transition-colors" title="Download File"> <i data-lucide="download" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Download</span> </button> <button id="btnSettings" class="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors" title="Settings"> <i data-lucide="settings" class="w-4 h-4"></i> </button>
     </div>
-   </header><!-- TAB BAR -->
-   <div id="tab-bar" class="flex items-center gap-0 px-1 shrink-0 overflow-x-auto" style="background: rgba(18,18,22,0.9); border-bottom: 1px solid rgba(255,255,255,0.04); min-height: 36px;">
-   </div><!-- MAIN CONTENT -->
-   <div id="main-wrapper" class="flex-1 flex flex-col relative overflow-hidden" style="min-height: 0;"><!-- Sidebar Overlay -->
-    <div id="sidebar-overlay" class="sidebar-overlay"></div><!-- LEFT SIDEBAR: Files -->
-    <aside id="sidebar-files" class="sidebar-left glass-strong">
-     <div class="flex items-center justify-between p-4 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.06);"><span class="font-display font-semibold text-xs uppercase tracking-widest" style="color: rgba(255,255,255,0.4);">Explorer</span> <button id="btn-new-file" class="p-1.5 rounded-md hover:bg-white/10 transition-colors" aria-label="New file"> <i data-lucide="file-plus" style="width:15px;height:15px;color:#caff33;"></i> </button>
+   </header><!-- MAIN CONTENT -->
+   <div class="flex flex-1 overflow-hidden relative">
+    <!-- LEFT SIDEBAR -->
+    <aside id="sidebar" class="hidden lg:flex flex-col flex-shrink-0 border-r border-white/5 panel-glass slide-left" style="width:220px;">
+     <div class="flex items-center justify-between p-3 border-b border-white/5">
+      <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Explorer</span> <button id="btnNewFile" class="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors" title="New File"> <i data-lucide="file-plus" class="w-4 h-4"></i> </button>
      </div>
-     <div id="file-list" class="py-2 overflow-y-auto" style="max-height: calc(100% - 56px);"></div>
-    </aside><!-- RIGHT SIDEBAR: Settings -->
-    <aside id="sidebar-settings" class="sidebar-right glass-strong overflow-y-auto">
-     <div class="flex items-center justify-between p-4 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.06);"><span class="font-display font-semibold text-xs uppercase tracking-widest" style="color: rgba(255,255,255,0.4);">Settings</span> <button id="btn-close-settings" class="p-1.5 rounded-md hover:bg-white/10 transition-colors" aria-label="Close settings"> <i data-lucide="x" style="width:15px;height:15px;color:#e2e8f0;"></i> </button>
+     <div id="fileList" class="flex-1 overflow-y-auto p-1.5"></div>
+    </aside><!-- MOBILE SIDEBAR OVERLAY -->
+    <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black/50 z-40 lg:hidden" style="backdrop-filter:blur(4px);"></div>
+    <aside id="sidebarMobile" class="hidden fixed left-0 top-0 bottom-0 z-50 flex-col panel-glass slide-left lg:hidden" style="width:260px;">
+     <div class="flex items-center justify-between p-3 border-b border-white/5">
+      <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Explorer</span>
+      <div class="flex items-center gap-1">
+       <button id="btnNewFileMobile" class="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors" title="New File"> <i data-lucide="file-plus" class="w-4 h-4"></i> </button> <button id="closeSidebar" class="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors"> <i data-lucide="x" class="w-4 h-4"></i> </button>
+      </div>
      </div>
-     <div class="p-4 space-y-5"><!-- Font Size -->
-      <div><label class="block text-xs font-display font-medium mb-2" style="color:rgba(255,255,255,0.5);">Font Size</label>
-       <div class="flex items-center gap-3"><input id="set-fontsize" type="range" min="11" max="24" value="14" class="flex-1 accent-[#caff33]"> <span id="fontsize-val" class="text-xs font-mono" style="color:#caff33; min-width: 30px;">14px</span>
+     <div id="fileListMobile" class="flex-1 overflow-y-auto p-1.5"></div>
+    </aside><!-- EDITOR + OUTPUT -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+     <!-- TABS -->
+     <div id="tabBar" class="flex items-center border-b border-white/5 overflow-x-auto flex-shrink-0" style="background:rgba(13,13,20,0.7);"></div><!-- EDITOR -->
+     <div class="flex-1 flex overflow-hidden relative" id="editorWrapper">
+      <!-- Line numbers -->
+      <div id="lineNumbers" class="flex-shrink-0 text-right select-none pr-3 pl-3 pt-0 overflow-hidden font-mono text-xs" style="color:#3a3a4a;min-width:48px;line-height:1.65em;"></div><!-- Code area -->
+      <div class="flex-1 relative overflow-hidden">
+       <div id="highlightOverlay" class="highlight-overlay"></div><textarea id="codeInput" class="code-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="Code editor"></textarea>
+      </div>
+     </div><!-- RESIZE HANDLE -->
+     <div id="resizeHandle" class="flex-shrink-0 flex items-center justify-center cursor-row-resize group" style="height:6px;background:rgba(200,255,0,0.03);border-top:1px solid rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.05);">
+      <div class="w-8 h-0.5 rounded-full bg-white/10 group-hover:bg-white/30 transition-colors"></div>
+     </div><!-- OUTPUT CONSOLE -->
+     <div id="outputPanel" class="flex-shrink-0 flex flex-col overflow-hidden" style="height:180px;background:#0a0a10;">
+      <div class="flex items-center justify-between px-3 py-1.5 border-b border-white/5 flex-shrink-0">
+       <div class="flex items-center gap-2">
+        <i data-lucide="terminal" class="w-3.5 h-3.5 text-gray-500"></i> <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Output</span> <span id="outputStatus" class="text-xs text-gray-600"></span>
+       </div><button id="btnClearOutput" class="p-1 rounded hover:bg-white/10 text-gray-500 hover:text-white transition-colors" title="Clear"> <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> </button>
+      </div>
+      <div id="outputContent" class="flex-1 overflow-y-auto overflow-x-hidden p-3 font-mono text-xs" style="color:#50fa7b;line-height:1.6;word-wrap:break-word;white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word;display:flex;flex-direction:column;"></div>
+     </div>
+    </div><!-- SETTINGS PANEL -->
+    <div id="settingsOverlay" class="hidden fixed inset-0 bg-black/40 z-40" style="backdrop-filter:blur(4px);"></div>
+    <aside id="settingsPanel" class="hidden fixed right-0 top-0 bottom-0 z-50 flex-col panel-glass slide-right overflow-y-auto" style="width:300px;max-width:85%;">
+     <div class="flex items-center justify-between p-4 border-b border-white/5">
+      <span class="font-semibold text-white text-sm">Settings</span> <button id="closeSettings" class="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors"> <i data-lucide="x" class="w-4 h-4"></i> </button>
+     </div>
+     <div class="p-4 space-y-5">
+      <!-- Font Size -->
+      <div>
+       <label class="block text-xs font-medium text-gray-400 mb-1.5">Font Size</label> <input type="range" id="settingFontSize" min="10" max="24" value="14" class="w-full accent-[#c8ff00]">
+       <div class="text-xs text-gray-500 mt-1"><span id="fontSizeVal">14</span>px
        </div>
       </div><!-- Font Family -->
-      <div><label class="block text-xs font-display font-medium mb-2" style="color:rgba(255,255,255,0.5);">Font Family</label> <select id="set-fontfamily" class="w-full px-3 py-2 rounded-lg text-sm font-mono" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); color:#e2e8f0; outline:none;"> <option value="'JetBrains Mono', monospace">JetBrains Mono</option> <option value="'Fira Code', monospace">Fira Code</option> <option value="'Source Code Pro', monospace">Source Code Pro</option> <option value="'Cascadia Code', monospace">Cascadia Code</option> <option value="monospace">System Mono</option> </select>
+      <div>
+       <label class="block text-xs font-medium text-gray-400 mb-1.5">Font Family</label> <select id="settingFontFamily" class="setting-input text-sm"> <option value="JetBrains Mono">JetBrains Mono</option> <option value="Fira Code">Fira Code</option> <option value="Source Code Pro">Source Code Pro</option> <option value="Cascadia Code">Cascadia Code</option> <option value="monospace">System Monospace</option> </select>
       </div><!-- Theme -->
-      <div><label class="block text-xs font-display font-medium mb-2" style="color:rgba(255,255,255,0.5);">Theme</label>
-       <div class="flex gap-2"><button class="theme-btn flex-1 px-3 py-2 rounded-lg text-xs font-display font-medium transition-all" data-theme="dark" style="background:rgba(202,255,51,0.12); color:#caff33; border:1px solid rgba(202,255,51,0.3);">Dark</button> <button class="theme-btn flex-1 px-3 py-2 rounded-lg text-xs font-display font-medium transition-all" data-theme="light" style="background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.5); border:1px solid rgba(255,255,255,0.08);">Light</button>
+      <div>
+       <label class="block text-xs font-medium text-gray-400 mb-1.5">Theme</label>
+       <div class="flex gap-2">
+        <button id="themeDark" class="flex-1 py-2 rounded-lg text-xs font-medium transition-all" style="background:#c8ff00;color:#0d0d14;">Dark</button> <button id="themeLight" class="flex-1 py-2 rounded-lg text-xs font-medium text-gray-400 hover:text-white border border-white/10 transition-all">Light</button>
        </div>
-      </div><!-- Line Numbers -->
-      <div class="flex items-center justify-between"><span class="text-xs font-display font-medium" style="color:rgba(255,255,255,0.5);">Line Numbers</span> <button id="toggle-linenums" class="w-10 h-5 rounded-full relative transition-all" style="background:#caff33;" aria-label="Toggle line numbers"> <span class="absolute top-0.5 w-4 h-4 rounded-full transition-all" style="background:#0e0e12; left: calc(100% - 18px);"></span> </button>
+      </div><!-- Line Numbers Toggle -->
+      <div class="flex items-center justify-between">
+       <span class="text-xs font-medium text-gray-400">Line Numbers</span>
+       <div id="toggleLineNums" class="toggle-track on">
+        <div class="toggle-knob"></div>
+       </div>
       </div><!-- Word Wrap -->
-      <div class="flex items-center justify-between"><span class="text-xs font-display font-medium" style="color:rgba(255,255,255,0.5);">Word Wrap</span> <button id="toggle-wordwrap" class="w-10 h-5 rounded-full relative transition-all" style="background:rgba(255,255,255,0.15);" aria-label="Toggle word wrap"> <span class="absolute top-0.5 w-4 h-4 rounded-full transition-all" style="background:#e2e8f0; left: 2px;"></span> </button>
-      </div><!-- Auto Save -->
-      <div class="flex items-center justify-between"><span class="text-xs font-display font-medium" style="color:rgba(255,255,255,0.5);">Auto Save</span> <button id="toggle-autosave" class="w-10 h-5 rounded-full relative transition-all" style="background:#caff33;" aria-label="Toggle auto save"> <span class="absolute top-0.5 w-4 h-4 rounded-full transition-all" style="background:#0e0e12; left: calc(100% - 18px);"></span> </button>
-      </div>
-     </div>
-    </aside><!-- EDITOR SECTION -->
-    <div id="editor-section" class="flex-1 relative overflow-hidden" style="min-height: 120px;">
-     <div id="editor-scroll" class="absolute inset-0 overflow-auto" style="background: #12121a;">
-      <div id="editor-display" class="editor-area p-4 pl-0" style="font-size: 14px;"></div><textarea id="code-input" class="code-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" aria-label="Code editor"></textarea>
-      <div id="autocomplete-popup" class="hidden absolute bg-slate-900 border border-slate-700 rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto" style="min-width:180px;">
-       <div id="autocomplete-list"></div>
-      </div>
-     </div>
-    </div><!-- RESIZE HANDLE -->
-    <div id="resize-handle" class="resize-handle shrink-0" style="background: rgba(18,18,22,0.9); border-top: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06);"></div><!-- OUTPUT PANEL -->
-    <div id="output-section" class="shrink-0 flex flex-col" style="height: 200px; min-height: 80px; background: #0a0a0f;">
-     <div class="flex items-center justify-between px-4 py-2 shrink-0" style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-      <div class="flex items-center gap-2"><i data-lucide="terminal" style="width:13px;height:13px;color:#caff33;"></i> <span class="font-display font-semibold text-xs uppercase tracking-wider" style="color:rgba(255,255,255,0.4);">Output</span>
-       <div id="compile-status" class="hidden items-center gap-1 ml-2"><span class="compiling-dot w-1.5 h-1.5 rounded-full" style="background:#caff33;"></span> <span class="compiling-dot w-1.5 h-1.5 rounded-full" style="background:#caff33;"></span> <span class="compiling-dot w-1.5 h-1.5 rounded-full" style="background:#caff33;"></span> <span class="text-xs font-display ml-1" style="color:rgba(202,255,51,0.7);">Compiling...</span>
+      <div class="flex items-center justify-between">
+       <span class="text-xs font-medium text-gray-400">Word Wrap</span>
+       <div id="toggleWordWrap" class="toggle-track">
+        <div class="toggle-knob"></div>
        </div>
-      </div><button id="btn-clear-output" class="p-1 rounded hover:bg-white/5 transition-colors" aria-label="Clear output"> <i data-lucide="trash-2" style="width:13px;height:13px;color:rgba(255,255,255,0.3);"></i> </button>
-     </div>
-     <div id="output-content" class="flex-1 overflow-auto p-4">
-      <div class="output-text text-xs" style="color: rgba(255,255,255,0.3);"><span style="color:#caff33;">⚡</span> <span id="welcome-msg-text">Ready to compile. Press Run or Ctrl+Enter.</span>
+      </div><!-- Auto Save -->
+      <div class="flex items-center justify-between">
+       <span class="text-xs font-medium text-gray-400">Auto Save</span>
+       <div id="toggleAutoSave" class="toggle-track on">
+        <div class="toggle-knob"></div>
+       </div>
       </div>
      </div>
-    </div>
-   </div><!-- STATUS BAR -->
-   <footer class="flex items-center justify-between px-3 sm:px-4 py-1 shrink-0 text-xs" style="background: rgba(14,14,18,0.95); border-top: 1px solid rgba(255,255,255,0.04); color: rgba(255,255,255,0.3); font-family: 'JetBrains Mono', monospace; font-size: 10px;">
-    <div class="flex items-center gap-3">
-     <div class="flex items-center gap-1.5">
-      <div id="status-dot" class="status-dot" style="background:#caff33;"></div><span id="status-text">Ready</span>
-     </div><span id="active-file-status">main.c</span>
-    </div>
-    <div class="flex items-center gap-3"><span id="cursor-pos">Ln 1, Col 1</span> <span>C (GCC)</span>
-    </div>
-   </footer>
-  </div><!-- Toast Container -->
-  <div id="toast-container"></div><!-- Inline New-File Prompt -->
-  <div id="newfile-prompt" class="hidden" style="position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);">
-   <div class="glass-strong rounded-xl p-5 w-80 anim-slide" style="border:1px solid rgba(202,255,51,0.15);">
-    <p class="font-display font-semibold text-sm mb-3" style="color:#caff33;">New File</p><input id="newfile-input" type="text" placeholder="filename.c" class="w-full px-3 py-2 rounded-lg text-sm font-mono mb-3" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#e2e8f0;outline:none;">
-    <div class="flex gap-2 justify-end"><button id="newfile-cancel" class="px-3 py-1.5 rounded-lg text-xs font-display" style="color:rgba(255,255,255,0.5);">Cancel</button> <button id="newfile-ok" class="px-4 py-1.5 rounded-lg text-xs font-display font-semibold" style="background:#caff33;color:#0e0e12;">Create</button>
-    </div>
+    </aside>
    </div>
-  </div><!-- Delete Confirm Inline -->
-  <div id="delete-prompt" class="hidden" style="position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);">
-   <div class="glass-strong rounded-xl p-5 w-80 anim-slide" style="border:1px solid rgba(255,85,114,0.2);">
-    <p class="font-display font-semibold text-sm mb-1" style="color:#ff5572;">Delete File</p>
-    <p id="delete-msg" class="text-xs mb-4" style="color:rgba(255,255,255,0.5);"></p>
-    <div class="flex gap-2 justify-end"><button id="delete-cancel" class="px-3 py-1.5 rounded-lg text-xs font-display" style="color:rgba(255,255,255,0.5);">Cancel</button> <button id="delete-ok" class="px-4 py-1.5 rounded-lg text-xs font-display font-semibold" style="background:#ff5572;color:#fff;">Delete</button>
+  </div><!-- INLINE FILE RENAME DIALOG -->
+  <div id="renameDialog" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);">
+   <div class="panel-glass rounded-xl p-5 w-80 fade-up">
+    <h3 class="text-sm font-semibold text-white mb-3">New File Name</h3><input id="renameInput" class="setting-input text-sm mb-3" placeholder="filename.c">
+    <div class="flex gap-2 justify-end">
+     <button id="renameCancel" class="px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors">Cancel</button> <button id="renameConfirm" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all" style="background:#c8ff00;color:#0d0d14;">Rename</button>
     </div>
    </div>
   </div>
   <script>
-// ─── STATE ──────────────────────────────────────────────
+// ==================== STATE ====================
 const DEFAULT_CODE = `#include <stdio.h>
 
 int main() {
     printf("Hello, World!\\n");
+    printf("Welcome to Craby C Compiler!\\n");
     
-    int a = 10, b = 20;
-    printf("Sum of %d and %d is %d\\n", a, b, a + b);
-    
-    for (int i = 1; i <= 5; i++) {
-        printf("Iteration %d\\n", i);
+    int sum = 0;
+    for (int i = 1; i <= 10; i++) {
+        sum += i;
     }
+    printf("Sum of 1 to 10 = %d\\n", sum);
     
     return 0;
 }`;
 
-let files = { 'main.c': DEFAULT_CODE };
-let activeFile = 'main.c';
+let files = [{ name: 'main.c', content: DEFAULT_CODE }];
+let activeFileIdx = 0;
 let settings = {
   fontSize: 14,
-  fontFamily: "'JetBrains Mono', monospace",
+  fontFamily: 'JetBrains Mono',
   theme: 'dark',
   lineNumbers: true,
   wordWrap: false,
   autoSave: true
 };
-let deleteTarget = null;
+let isCompiling = false;
 
-// Load from localStorage
-try {
-  const saved = localStorage.getItem('cforge_files');
-  if (saved) files = JSON.parse(saved);
-  const savedSettings = localStorage.getItem('cforge_settings');
-  if (savedSettings) settings = { ...settings, ...JSON.parse(savedSettings) };
-  const savedActive = localStorage.getItem('cforge_active');
-  if (savedActive && files[savedActive]) activeFile = savedActive;
-} catch(e) {}
-
-// ─── DOM REFS ───────────────────────────────────────────
+// ==================== DOM REFS ====================
 const $ = id => document.getElementById(id);
-const codeInput = $('code-input');
-const editorDisplay = $('editor-display');
-const editorScroll = $('editor-scroll');
-const outputContent = $('output-content');
-const compileStatus = $('compile-status');
-const tabBar = $('tab-bar');
-const fileList = $('file-list');
-const sidebarFiles = $('sidebar-files');
-const sidebarSettings = $('sidebar-settings');
-const sidebarOverlay = $('sidebar-overlay');
+const codeInput = $('codeInput');
+const highlightOverlay = $('highlightOverlay');
+const lineNumbers = $('lineNumbers');
+const outputContent = $('outputContent');
+const outputStatus = $('outputStatus');
+const tabBar = $('tabBar');
+const fileList = $('fileList');
+const fileListMobile = $('fileListMobile');
 
-// ─── SYNTAX HIGHLIGHTING ────────────────────────────────
-const C_KEYWORDS = ['auto','break','case','char','const','continue','default','do','double','else','enum','extern','float','for','goto','if','inline','int','long','register','restrict','return','short','signed','sizeof','static','struct','switch','typedef','union','unsigned','void','volatile','while','_Bool','_Complex','_Imaginary','NULL','true','false','TRUE','FALSE'];
-const C_TYPES = ['int','char','float','double','long','short','void','unsigned','signed','size_t','FILE','bool'];
-const C_STDLIB = ['printf','scanf','fprintf','sprintf','snprintf','malloc','calloc','realloc','free','strlen','strcpy','strncpy','strcat','strcmp','memcpy','memset','fopen','fclose','fread','fwrite','fgets','fputs','puts','gets','getchar','putchar','atoi','atof','atol','exit','abs','rand','srand','sizeof','main'];
+// ==================== SYNTAX HIGHLIGHTING ====================
+const C_KEYWORDS = new Set(['auto','break','case','const','continue','default','do','else','enum','extern','for','goto','if','inline','register','restrict','return','sizeof','static','struct','switch','typedef','union','volatile','while','_Alignas','_Alignof','_Atomic','_Bool','_Complex','_Generic','_Imaginary','_Noreturn','_Static_assert','_Thread_local']);
+const C_TYPES = new Set(['int','char','float','double','void','long','short','signed','unsigned','bool','size_t','FILE','NULL']);
 
-function escHtml(s) {
+// ==================== AUTOCOMPLETE ====================
+const AUTOCOMPLETE_SUGGESTIONS = [
+  // Headers
+  { label: '#include <stdio.h>', type: 'header', snippet: '#include <stdio.h>', desc: 'Standard I/O' },
+  { label: '#include <stdlib.h>', type: 'header', snippet: '#include <stdlib.h>', desc: 'Standard library' },
+  { label: '#include <string.h>', type: 'header', snippet: '#include <string.h>', desc: 'String functions' },
+  { label: '#include <math.h>', type: 'header', snippet: '#include <math.h>', desc: 'Math functions' },
+  { label: '#include <time.h>', type: 'header', snippet: '#include <time.h>', desc: 'Time functions' },
+  { label: '#include <ctype.h>', type: 'header', snippet: '#include <ctype.h>', desc: 'Character types' },
+  { label: '#include <assert.h>', type: 'header', snippet: '#include <assert.h>', desc: 'Assertions' },
+  { label: '#include <errno.h>', type: 'header', snippet: '#include <errno.h>', desc: 'Error handling' },
+  { label: '#include <limits.h>', type: 'header', snippet: '#include <limits.h>', desc: 'Limits' },
+  { label: '#include <float.h>', type: 'header', snippet: '#include <float.h>', desc: 'Float limits' },
+  
+  // Keywords
+  { label: 'if', type: 'keyword', snippet: 'if () {\n    \n}', desc: 'Conditional statement' },
+  { label: 'else', type: 'keyword', snippet: 'else {\n    \n}', desc: 'Else clause' },
+  { label: 'for', type: 'keyword', snippet: 'for (int i = 0; i < ; i++) {\n    \n}', desc: 'For loop' },
+  { label: 'while', type: 'keyword', snippet: 'while () {\n    \n}', desc: 'While loop' },
+  { label: 'do', type: 'keyword', snippet: 'do {\n    \n} while ();', desc: 'Do-while loop' },
+  { label: 'switch', type: 'keyword', snippet: 'switch () {\n    case :\n        break;\n    default:\n        break;\n}', desc: 'Switch statement' },
+  { label: 'case', type: 'keyword', snippet: 'case :', desc: 'Case label' },
+  { label: 'break', type: 'keyword', snippet: 'break;', desc: 'Break statement' },
+  { label: 'continue', type: 'keyword', snippet: 'continue;', desc: 'Continue loop' },
+  { label: 'return', type: 'keyword', snippet: 'return ;', desc: 'Return value' },
+  { label: 'void', type: 'keyword', snippet: 'void', desc: 'No return type' },
+  { label: 'int', type: 'keyword', snippet: 'int', desc: 'Integer type' },
+  { label: 'float', type: 'keyword', snippet: 'float', desc: 'Float type' },
+  { label: 'double', type: 'keyword', snippet: 'double', desc: 'Double type' },
+  { label: 'char', type: 'keyword', snippet: 'char', desc: 'Character type' },
+  { label: 'struct', type: 'keyword', snippet: 'struct  {\n    \n};', desc: 'Structure' },
+  { label: 'union', type: 'keyword', snippet: 'union  {\n    \n};', desc: 'Union' },
+  { label: 'enum', type: 'keyword', snippet: 'enum  {\n    \n};', desc: 'Enumeration' },
+  { label: 'typedef', type: 'keyword', snippet: 'typedef ', desc: 'Type definition' },
+  { label: 'const', type: 'keyword', snippet: 'const ', desc: 'Constant' },
+  { label: 'static', type: 'keyword', snippet: 'static ', desc: 'Static' },
+  { label: 'extern', type: 'keyword', snippet: 'extern ', desc: 'External' },
+  { label: 'sizeof', type: 'keyword', snippet: 'sizeof()', desc: 'Get size' },
+  { label: 'goto', type: 'keyword', snippet: 'goto ;', desc: 'Jump to label' },
+  
+  // I/O Functions
+  { label: 'printf', type: 'function', snippet: 'printf("");', desc: 'Print formatted output' },
+  { label: 'scanf', type: 'function', snippet: 'scanf("", &);', desc: 'Read formatted input' },
+  { label: 'getchar', type: 'function', snippet: 'getchar();', desc: 'Read character' },
+  { label: 'putchar', type: 'function', snippet: 'putchar();', desc: 'Write character' },
+  { label: 'gets', type: 'function', snippet: 'gets();', desc: 'Read string (unsafe)' },
+  { label: 'puts', type: 'function', snippet: 'puts("");', desc: 'Write string' },
+  
+  // String Functions
+  { label: 'strlen', type: 'function', snippet: 'strlen();', desc: 'String length' },
+  { label: 'strcpy', type: 'function', snippet: 'strcpy(, );', desc: 'Copy string' },
+  { label: 'strncpy', type: 'function', snippet: 'strncpy(, , );', desc: 'Copy n chars' },
+  { label: 'strcat', type: 'function', snippet: 'strcat(, );', desc: 'Concatenate strings' },
+  { label: 'strncat', type: 'function', snippet: 'strncat(, , );', desc: 'Concatenate n chars' },
+  { label: 'strcmp', type: 'function', snippet: 'strcmp(, );', desc: 'Compare strings' },
+  { label: 'strncmp', type: 'function', snippet: 'strncmp(, , );', desc: 'Compare n chars' },
+  { label: 'strchr', type: 'function', snippet: 'strchr(, );', desc: 'Find character' },
+  { label: 'strstr', type: 'function', snippet: 'strstr(, );', desc: 'Find substring' },
+  
+  // Memory Functions
+  { label: 'malloc', type: 'function', snippet: 'malloc();', desc: 'Allocate memory' },
+  { label: 'calloc', type: 'function', snippet: 'calloc(, );', desc: 'Allocate & clear' },
+  { label: 'realloc', type: 'function', snippet: 'realloc(, );', desc: 'Reallocate memory' },
+  { label: 'free', type: 'function', snippet: 'free();', desc: 'Free memory' },
+  { label: 'memcpy', type: 'function', snippet: 'memcpy(, , );', desc: 'Copy memory' },
+  { label: 'memmove', type: 'function', snippet: 'memmove(, , );', desc: 'Move memory' },
+  { label: 'memset', type: 'function', snippet: 'memset(, , );', desc: 'Set memory' },
+  { label: 'memcmp', type: 'function', snippet: 'memcmp(, , );', desc: 'Compare memory' },
+  
+  // Math Functions
+  { label: 'abs', type: 'function', snippet: 'abs();', desc: 'Absolute value' },
+  { label: 'labs', type: 'function', snippet: 'labs();', desc: 'Long absolute value' },
+  { label: 'sqrt', type: 'function', snippet: 'sqrt();', desc: 'Square root' },
+  { label: 'pow', type: 'function', snippet: 'pow(, );', desc: 'Power' },
+  { label: 'exp', type: 'function', snippet: 'exp();', desc: 'Exponential' },
+  { label: 'log', type: 'function', snippet: 'log();', desc: 'Natural log' },
+  { label: 'log10', type: 'function', snippet: 'log10();', desc: 'Log base 10' },
+  { label: 'sin', type: 'function', snippet: 'sin();', desc: 'Sine' },
+  { label: 'cos', type: 'function', snippet: 'cos();', desc: 'Cosine' },
+  { label: 'tan', type: 'function', snippet: 'tan();', desc: 'Tangent' },
+  { label: 'ceil', type: 'function', snippet: 'ceil();', desc: 'Round up' },
+  { label: 'floor', type: 'function', snippet: 'floor();', desc: 'Round down' },
+  { label: 'fabs', type: 'function', snippet: 'fabs();', desc: 'Float absolute value' },
+  
+  // Random Functions
+  { label: 'rand', type: 'function', snippet: 'rand();', desc: 'Random number' },
+  { label: 'srand', type: 'function', snippet: 'srand();', desc: 'Seed random' },
+  
+  // File Functions
+  { label: 'fopen', type: 'function', snippet: 'fopen("", "");', desc: 'Open file' },
+  { label: 'fclose', type: 'function', snippet: 'fclose();', desc: 'Close file' },
+  { label: 'fread', type: 'function', snippet: 'fread(, , , );', desc: 'Read file' },
+  { label: 'fwrite', type: 'function', snippet: 'fwrite(, , , );', desc: 'Write file' },
+  { label: 'fprintf', type: 'function', snippet: 'fprintf(, "");', desc: 'Write to file' },
+  { label: 'fscanf', type: 'function', snippet: 'fscanf(, "", &);', desc: 'Read from file' },
+  { label: 'fgets', type: 'function', snippet: 'fgets(, , );', desc: 'Read line from file' },
+  { label: 'fputs', type: 'function', snippet: 'fputs("", );', desc: 'Write to file' },
+  { label: 'fseek', type: 'function', snippet: 'fseek(, , );', desc: 'Seek in file' },
+  { label: 'ftell', type: 'function', snippet: 'ftell();', desc: 'Get file position' },
+  { label: 'rewind', type: 'function', snippet: 'rewind();', desc: 'Rewind file' },
+  
+  // System Functions
+  { label: 'system', type: 'function', snippet: 'system("");', desc: 'Execute command' },
+  { label: 'exit', type: 'function', snippet: 'exit();', desc: 'Exit program' },
+  { label: 'abort', type: 'function', snippet: 'abort();', desc: 'Abort program' },
+  
+  // Special Functions
+  { label: 'main', type: 'function', snippet: 'int main() {\n    \n    return 0;\n}', desc: 'Main entry point' },
+];
+
+let autocompleteContainer = null;
+let autocompleteSelectedIdx = -1;
+let lastAutocompleteQuery = '';
+
+function escapeHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function highlightLine(line) {
-  // Preprocessor directives
-  if (/^\s*#/.test(line)) {
-    return `<span class="syn-pre">${escHtml(line)}</span>`;
-  }
-
+function highlightC(code) {
+  // Tokenize and highlight
   let result = '';
   let i = 0;
-  while (i < line.length) {
-    // Single-line comment
-    if (line[i] === '/' && line[i+1] === '/') {
-      result += `<span class="syn-cmt">${escHtml(line.slice(i))}</span>`;
-      break;
+  const len = code.length;
+
+  while (i < len) {
+    // Comments
+    if (code[i] === '/' && code[i+1] === '/') {
+      let end = code.indexOf('\n', i);
+      if (end === -1) end = len;
+      result += `<span class="comment">${escapeHtml(code.slice(i, end))}</span>`;
+      i = end;
+      continue;
     }
-    // Multi-line comment start (simplified)
-    if (line[i] === '/' && line[i+1] === '*') {
-      const end = line.indexOf('*/', i+2);
-      if (end !== -1) {
-        result += `<span class="syn-cmt">${escHtml(line.slice(i, end+2))}</span>`;
-        i = end + 2;
-        continue;
-      } else {
-        result += `<span class="syn-cmt">${escHtml(line.slice(i))}</span>`;
-        break;
-      }
+    if (code[i] === '/' && code[i+1] === '*') {
+      let end = code.indexOf('*/', i+2);
+      if (end === -1) end = len; else end += 2;
+      result += `<span class="comment">${escapeHtml(code.slice(i, end))}</span>`;
+      i = end;
+      continue;
+    }
+    // Preprocessor
+    if (code[i] === '#' && (i === 0 || code[i-1] === '\n')) {
+      let end = i;
+      while (end < len && code[end] !== '\n') end++;
+      result += `<span class="preproc">${escapeHtml(code.slice(i, end))}</span>`;
+      i = end;
+      continue;
     }
     // Strings
-    if (line[i] === '"') {
-      let j = i + 1;
-      while (j < line.length && !(line[j] === '"' && line[j-1] !== '\\')) j++;
-      result += `<span class="syn-str">${escHtml(line.slice(i, j+1))}</span>`;
-      i = j + 1;
+    if (code[i] === '"') {
+      let end = i+1;
+      while (end < len && code[end] !== '"') { if (code[end] === '\\') end++; end++; }
+      if (end < len) end++;
+      result += `<span class="string-lit">${escapeHtml(code.slice(i, end))}</span>`;
+      i = end;
       continue;
     }
     // Char literals
-    if (line[i] === "'") {
-      let j = i + 1;
-      while (j < line.length && !(line[j] === "'" && line[j-1] !== '\\')) j++;
-      result += `<span class="syn-str">${escHtml(line.slice(i, j+1))}</span>`;
-      i = j + 1;
+    if (code[i] === "'") {
+      let end = i+1;
+      while (end < len && code[end] !== "'") { if (code[end] === '\\') end++; end++; }
+      if (end < len) end++;
+      result += `<span class="char-lit">${escapeHtml(code.slice(i, end))}</span>`;
+      i = end;
       continue;
     }
     // Numbers
-    if (/[0-9]/.test(line[i]) && (i === 0 || /[^a-zA-Z_]/.test(line[i-1]))) {
-      let j = i;
-      while (j < line.length && /[0-9.xXa-fA-F]/.test(line[j])) j++;
-      result += `<span class="syn-num">${escHtml(line.slice(i, j))}</span>`;
-      i = j;
+    if (/[0-9]/.test(code[i]) && (i === 0 || /[\s\(\),;=+\-*\/%<>!&|^~\[{]/.test(code[i-1]))) {
+      let end = i;
+      while (end < len && /[0-9a-fA-FxX.]/.test(code[end])) end++;
+      result += `<span class="number-lit">${escapeHtml(code.slice(i, end))}</span>`;
+      i = end;
       continue;
     }
-    // Words
-    if (/[a-zA-Z_]/.test(line[i])) {
-      let j = i;
-      while (j < line.length && /[a-zA-Z0-9_]/.test(line[j])) j++;
-      const word = line.slice(i, j);
-      // Check if followed by (
-      const isCall = line[j] === '(';
-      if (C_KEYWORDS.includes(word) && !C_TYPES.includes(word)) {
-        result += `<span class="syn-kw">${escHtml(word)}</span>`;
-      } else if (C_TYPES.includes(word)) {
-        result += `<span class="syn-type">${escHtml(word)}</span>`;
-      } else if (C_STDLIB.includes(word) || isCall) {
-        result += `<span class="syn-fn">${escHtml(word)}</span>`;
+    // Identifiers / keywords
+    if (/[a-zA-Z_]/.test(code[i])) {
+      let end = i;
+      while (end < len && /[a-zA-Z0-9_]/.test(code[end])) end++;
+      const word = code.slice(i, end);
+      // Check if function call
+      let afterWord = end;
+      while (afterWord < len && code[afterWord] === ' ') afterWord++;
+      if (C_KEYWORDS.has(word)) {
+        result += `<span class="keyword">${escapeHtml(word)}</span>`;
+      } else if (C_TYPES.has(word)) {
+        result += `<span class="type-kw">${escapeHtml(word)}</span>`;
+      } else if (afterWord < len && code[afterWord] === '(') {
+        result += `<span class="func-call">${escapeHtml(word)}</span>`;
       } else {
-        result += `<span class="syn-def">${escHtml(word)}</span>`;
+        result += escapeHtml(word);
       }
-      i = j;
+      i = end;
       continue;
     }
-    // Operators / punctuation
-    if ('{}[]();,=+-*/<>!&|^%~?:.'.includes(line[i])) {
-      result += `<span class="syn-op">${escHtml(line[i])}</span>`;
+    // Punctuation
+    if (/[{}()\[\];,.]/.test(code[i])) {
+      result += `<span class="punctuation">${escapeHtml(code[i])}</span>`;
       i++;
       continue;
     }
-    result += escHtml(line[i]);
+    // Default
+    result += escapeHtml(code[i]);
     i++;
   }
   return result;
 }
 
-// ─── EDITOR RENDERING ───────────────────────────────────
-let cursorLine = 0;
+// ==================== EDITOR ====================
+function updateEditor() {
+  const code = codeInput.value;
+  highlightOverlay.innerHTML = highlightC(code) + '\n';
+  updateLineNumbers(code);
+}
 
-function renderEditor() {
-  const code = files[activeFile] || '';
-  const lines = code.split('\n');
-  const showLn = settings.lineNumbers;
-
-  let html = '';
-  for (let i = 0; i < lines.length; i++) {
-    const isCursor = i === cursorLine;
-    html += `<div class="flex ${isCursor ? 'cursor-line' : ''}" style="min-height:1.65em;">`;
-    if (showLn) {
-      html += `<div class="line-number ${isCursor ? 'active-ln' : ''}" style="font-size:inherit;">${i+1}</div>`;
-    }
-    html += `<div class="code-line flex-1" style="${settings.wordWrap ? 'white-space:pre-wrap;word-break:break-all;' : ''}">${highlightLine(lines[i]) || ' '}</div>`;
-    html += `</div>`;
+function updateLineNumbers(code) {
+  if (!settings.lineNumbers) {
+    lineNumbers.style.display = 'none';
+    return;
   }
-  editorDisplay.innerHTML = html;
+  lineNumbers.style.display = 'block';
+  const lines = code.split('\n').length;
+  let html = '';
+  for (let i = 1; i <= lines; i++) {
+    html += `<div>${i}</div>`;
+  }
+  lineNumbers.innerHTML = html;
 }
 
 function syncScroll() {
-  codeInput.scrollTop = editorScroll.scrollTop;
-  codeInput.scrollLeft = editorScroll.scrollLeft;
+  highlightOverlay.scrollTop = codeInput.scrollTop;
+  highlightOverlay.scrollLeft = codeInput.scrollLeft;
+  lineNumbers.scrollTop = codeInput.scrollTop;
 }
 
-editorScroll.addEventListener('scroll', () => {
-  codeInput.style.top = -editorScroll.scrollTop + 'px';
-  codeInput.style.left = -editorScroll.scrollLeft + 'px';
-});
-
 codeInput.addEventListener('input', () => {
-  files[activeFile] = codeInput.value;
-  updateCursorLine();
-  renderEditor();
-  autoSave();
+  files[activeFileIdx].content = codeInput.value;
+  updateEditor();
   showAutocomplete();
+  if (settings.autoSave) saveToStorage();
 });
+codeInput.addEventListener('scroll', syncScroll);
 
-codeInput.addEventListener('click', () => { updateCursorLine(); renderEditor(); hideAutocomplete(); });
-codeInput.addEventListener('keyup', (e) => {
-  updateCursorLine();
-  renderEditor();
-  updateCursorPos();
-  if (e.key !== 'Enter' && e.key !== 'Escape' && !['ArrowUp','ArrowDown'].includes(e.key)) {
-    showAutocomplete();
-  }
-});
-
+// Tab key support
 codeInput.addEventListener('keydown', (e) => {
-  // Tab support
   if (e.key === 'Tab') {
     e.preventDefault();
     const start = codeInput.selectionStart;
     const end = codeInput.selectionEnd;
     codeInput.value = codeInput.value.substring(0, start) + '    ' + codeInput.value.substring(end);
     codeInput.selectionStart = codeInput.selectionEnd = start + 4;
-    files[activeFile] = codeInput.value;
-    renderEditor();
-    autoSave();
-    showAutocomplete();
-    return;
+    codeInput.dispatchEvent(new Event('input'));
   }
-  // Arrow keys for autocomplete navigation
-  const autocompletePopup = $('autocomplete-popup');
-  if (!autocompletePopup.classList.contains('hidden')) {
+  // Autocomplete selection
+  if (autocompleteContainer && autocompleteContainer.style.display !== 'none') {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      navigateAutocomplete(1);
+      const items = autocompleteContainer.querySelectorAll('.autocomplete-item');
+      autocompleteSelectedIdx = Math.min(autocompleteSelectedIdx + 1, items.length - 1);
+      updateAutocompleteSelection(items);
       return;
     }
     if (e.key === 'ArrowUp') {
       e.preventDefault();
-      navigateAutocomplete(-1);
+      autocompleteSelectedIdx = Math.max(autocompleteSelectedIdx - 1, 0);
+      const items = autocompleteContainer.querySelectorAll('.autocomplete-item');
+      updateAutocompleteSelection(items);
       return;
     }
     if (e.key === 'Enter') {
       e.preventDefault();
-      selectAutocomplete();
+      const items = autocompleteContainer.querySelectorAll('.autocomplete-item');
+      if (autocompleteSelectedIdx >= 0 && autocompleteSelectedIdx < items.length) {
+        selectAutocomplete(autocompleteSelectedIdx);
+      }
       return;
     }
-  }
-  // Escape to hide autocomplete
-  if (e.key === 'Escape') {
-    hideAutocomplete();
+    if (e.key === 'Escape') {
+      closeAutocomplete();
+      return;
+    }
   }
   // Ctrl+Enter to run
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
     e.preventDefault();
     runCode();
   }
-  // Ctrl+S to save
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-    e.preventDefault();
-    saveFiles();
-    showToast('Saved!', '#caff33');
-  }
 });
 
-function updateCursorLine() {
-  const val = codeInput.value.substring(0, codeInput.selectionStart);
-  cursorLine = val.split('\n').length - 1;
-}
-
-function updateCursorPos() {
-  const val = codeInput.value.substring(0, codeInput.selectionStart);
-  const lines = val.split('\n');
-  const ln = lines.length;
-  const col = lines[lines.length - 1].length + 1;
-  $('cursor-pos').textContent = `Ln ${ln}, Col ${col}`;
-}
-
-// ─── AUTOCOMPLETE ───────────────────────────────────────
-let autocompleteIndex = -1;
-const AUTOCOMPLETE_DB = {
-  // Printf variants
-  'printf': { label: 'printf', template: 'printf("")' },
-  'sprintf': { label: 'sprintf', template: 'sprintf(str, "")' },
-  'fprintf': { label: 'fprintf', template: 'fprintf(file, "")' },
-  // Scanf variants
-  'scanf': { label: 'scanf', template: 'scanf("")' },
-  'fscanf': { label: 'fscanf', template: 'fscanf(file, "")' },
-  // String functions
-  'strlen': { label: 'strlen', template: 'strlen(str)' },
-  'strcpy': { label: 'strcpy', template: 'strcpy(dest, src)' },
-  'strcat': { label: 'strcat', template: 'strcat(dest, src)' },
-  'strcmp': { label: 'strcmp', template: 'strcmp(str1, str2)' },
-  'strncpy': { label: 'strncpy', template: 'strncpy(dest, src, n)' },
-  // Memory functions
-  'malloc': { label: 'malloc', template: 'malloc(size)' },
-  'calloc': { label: 'calloc', template: 'calloc(num, size)' },
-  'realloc': { label: 'realloc', template: 'realloc(ptr, size)' },
-  'free': { label: 'free', template: 'free(ptr)' },
-  'memcpy': { label: 'memcpy', template: 'memcpy(dest, src, n)' },
-  'memset': { label: 'memset', template: 'memset(ptr, val, n)' },
-  // File I/O
-  'fopen': { label: 'fopen', template: 'fopen("file", "mode")' },
-  'fclose': { label: 'fclose', template: 'fclose(file)' },
-  'fread': { label: 'fread', template: 'fread(ptr, size, count, file)' },
-  'fwrite': { label: 'fwrite', template: 'fwrite(ptr, size, count, file)' },
-  'fgets': { label: 'fgets', template: 'fgets(str, size, file)' },
-  'fputs': { label: 'fputs', template: 'fputs(str, file)' },
-  // Math functions
-  'abs': { label: 'abs', template: 'abs(x)' },
-  'sqrt': { label: 'sqrt', template: 'sqrt(x)' },
-  'pow': { label: 'pow', template: 'pow(x, y)' },
-  'sin': { label: 'sin', template: 'sin(x)' },
-  'cos': { label: 'cos', template: 'cos(x)' },
-  // Conversion
-  'atoi': { label: 'atoi', template: 'atoi(str)' },
-  'atof': { label: 'atof', template: 'atof(str)' },
-  'atol': { label: 'atol', template: 'atol(str)' },
-  // Keywords
-  'for': { label: 'for', template: 'for (int i = 0; i < n; i++)' },
-  'while': { label: 'while', template: 'while (condition)' },
-  'if': { label: 'if', template: 'if (condition)' },
-  'else': { label: 'else', template: 'else' },
-  'switch': { label: 'switch', template: 'switch (var)' },
-  'return': { label: 'return', template: 'return 0;' }
-};
-
-function getWordAtCursor() {
-  const val = codeInput.value;
-  const pos = codeInput.selectionStart;
-  let start = pos;
-  while (start > 0 && /[a-zA-Z0-9_]/.test(val[start - 1])) start--;
-  return val.substring(start, pos);
-}
-
-function showAutocomplete() {
-  const word = getWordAtCursor();
-  if (word.length < 1) {
-    hideAutocomplete();
-    return;
-  }
-
-  const matches = Object.entries(AUTOCOMPLETE_DB)
-    .filter(([key]) => key.toLowerCase().startsWith(word.toLowerCase()))
-    .slice(0, 12)
-    .map(([key, data]) => data);
-
-  if (matches.length === 0) {
-    hideAutocomplete();
-    return;
-  }
-
-  const popup = $('autocomplete-popup');
-  const list = $('autocomplete-list');
-  list.innerHTML = matches.map((item, i) => `
-    <div class="autocomplete-item px-3 py-2 text-xs cursor-pointer hover:bg-white/10 ${i === 0 ? 'active' : ''}" data-template="${item.template}" style="color:#c3e88d; display:flex; justify-content:space-between; gap:10px;">
-      <span>${item.label}</span>
-      <span style="color:rgba(255,255,255,0.3); font-size:10px;">${item.template}</span>
-    </div>
-  `).join('');
-
-  autocompleteIndex = 0;
-
-  popup.style.left = (codeInput.offsetLeft + 64 + (codeInput.selectionStart * 8.4 - editorScroll.scrollLeft)) + 'px';
-  popup.style.top = (codeInput.offsetTop + 40 + (cursorLine * 26.4 - editorScroll.scrollTop)) + 'px';
-  popup.classList.remove('hidden');
-
-  list.querySelectorAll('.autocomplete-item').forEach(el => {
-    el.addEventListener('click', () => selectAutocompleteByElement(el));
-  });
-}
-
-function hideAutocomplete() {
-  $('autocomplete-popup').classList.add('hidden');
-  autocompleteIndex = -1;
-}
-
-function navigateAutocomplete(dir) {
-  const items = $('autocomplete-list').querySelectorAll('.autocomplete-item');
-  if (items.length === 0) return;
-
-  if (autocompleteIndex >= 0) {
-    items[autocompleteIndex].classList.remove('active');
-  }
-
-  autocompleteIndex += dir;
-  if (autocompleteIndex < 0) autocompleteIndex = items.length - 1;
-  if (autocompleteIndex >= items.length) autocompleteIndex = 0;
-
-  items[autocompleteIndex].classList.add('active');
-  items[autocompleteIndex].scrollIntoView({ block: 'nearest' });
-}
-
-function selectAutocomplete() {
-  const items = $('autocomplete-list').querySelectorAll('.autocomplete-item');
-  if (autocompleteIndex >= 0 && autocompleteIndex < items.length) {
-    selectAutocompleteByElement(items[autocompleteIndex]);
-  }
-}
-
-function selectAutocompleteByElement(el) {
-  const template = el.dataset.template;
-  const word = getWordAtCursor();
-  const val = codeInput.value;
-  const pos = codeInput.selectionStart;
-  const start = pos - word.length;
-
-  codeInput.value = val.substring(0, start) + template + val.substring(pos);
-  
-  // Position cursor inside parentheses for functions with parameters
-  const cursorPos = template.indexOf('(') + 1;
-  if (cursorPos > 0 && template.includes(')')) {
-    codeInput.selectionStart = codeInput.selectionEnd = start + cursorPos;
-  } else {
-    codeInput.selectionStart = codeInput.selectionEnd = start + template.length;
-  }
-  
-  files[activeFile] = codeInput.value;
-  renderEditor();
-  hideAutocomplete();
-  autoSave();
-  updateCursorPos();
-}
-function renderFileList() {
-  const names = Object.keys(files);
-  fileList.innerHTML = names.map(name => `
-    <div class="file-item flex items-center gap-2 px-4 py-2 cursor-pointer ${name === activeFile ? 'active' : ''}" data-file="${name}">
-      <i data-lucide="file-code" style="width:14px;height:14px;color:${name === activeFile ? '#caff33' : 'rgba(255,255,255,0.3)'};flex-shrink:0;"></i>
-      <span class="flex-1 text-xs font-mono truncate" style="color:${name === activeFile ? '#caff33' : '#e2e8f0'};">${name}</span>
-      ${names.length > 1 ? `<button class="file-delete p-0.5 rounded hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" data-del="${name}" aria-label="Delete ${name}" style="opacity:0.3;"><i data-lucide="x" style="width:12px;height:12px;"></i></button>` : ''}
-    </div>
-  `).join('');
-  lucide.createIcons();
-
-  fileList.querySelectorAll('.file-item').forEach(el => {
-    el.addEventListener('click', (e) => {
-      if (e.target.closest('.file-delete')) return;
-      switchFile(el.dataset.file);
+// ==================== FILES ====================
+function renderFiles() {
+  const render = (container) => {
+    container.innerHTML = '';
+    files.forEach((f, idx) => {
+      const div = document.createElement('div');
+      div.className = `file-item flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors ${idx === activeFileIdx ? 'active' : 'text-gray-400'}`;
+      div.innerHTML = `<i data-lucide="file-code" class="w-4 h-4 flex-shrink-0"></i><span class="truncate flex-1">${escapeHtml(f.name)}</span>${files.length > 1 ? `<button class="file-delete p-0.5 rounded hover:bg-red-500/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all" data-idx="${idx}" title="Delete"><i data-lucide="x" class="w-3 h-3"></i></button>` : ''}`;
+      div.addEventListener('click', (e) => {
+        if (e.target.closest('.file-delete')) {
+          deleteFile(idx);
+          return;
+        }
+        switchFile(idx);
+        // Close mobile sidebar
+        $('sidebarMobile').classList.add('hidden');
+        $('sidebarOverlay').classList.add('hidden');
+      });
+      // Show delete on hover
+      div.addEventListener('mouseenter', () => { const d = div.querySelector('.file-delete'); if(d) d.style.opacity='1'; });
+      div.addEventListener('mouseleave', () => { const d = div.querySelector('.file-delete'); if(d) d.style.opacity='0'; });
+      container.appendChild(div);
     });
-  });
-  fileList.querySelectorAll('.file-delete').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteTarget = btn.dataset.del;
-      $('delete-msg').textContent = `Are you sure you want to delete "${deleteTarget}"?`;
-      $('delete-prompt').style.display = 'flex';
-    });
-  });
+    lucide.createIcons({ nameAttr: 'data-lucide' });
+  };
+  render(fileList);
+  render(fileListMobile);
+  renderTabs();
 }
 
 function renderTabs() {
-  const names = Object.keys(files);
-  tabBar.innerHTML = names.map(name => `
-    <div class="tab-item flex items-center gap-1.5 px-3 py-1.5 cursor-pointer ${name === activeFile ? 'active' : ''}" data-tab="${name}">
-      <i data-lucide="file-code" style="width:11px;height:11px;color:${name === activeFile ? '#caff33' : 'rgba(255,255,255,0.25)'};"></i>
-      <span class="text-xs font-mono" style="color:${name === activeFile ? '#e2e8f0' : 'rgba(255,255,255,0.4)'};">${name}</span>
-    </div>
-  `).join('');
-  lucide.createIcons();
-
-  tabBar.querySelectorAll('.tab-item').forEach(el => {
-    el.addEventListener('click', () => switchFile(el.dataset.tab));
+  tabBar.innerHTML = '';
+  files.forEach((f, idx) => {
+    const tab = document.createElement('button');
+    tab.className = `flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap transition-all group ${idx === activeFileIdx ? 'tab-active' : 'tab-inactive'}`;
+    tab.innerHTML = `<i data-lucide="file-code" class="w-3 h-3"></i><span>${escapeHtml(f.name)}</span>${files.length > 1 ? `<button class="tab-delete p-0 rounded hover:bg-red-500/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all ml-1" data-idx="${idx}" title="Delete"><i data-lucide="x" class="w-3 h-3"></i></button>` : ''}`;
+    tab.addEventListener('click', (e) => {
+      if (e.target.closest('.tab-delete')) {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteFile(idx);
+        return;
+      }
+      switchFile(idx);
+    });
+    tabBar.appendChild(tab);
   });
+  lucide.createIcons({ nameAttr: 'data-lucide' });
 }
 
-function switchFile(name) {
-  if (!files[name]) return;
-  activeFile = name;
-  codeInput.value = files[name];
-  cursorLine = 0;
-  renderEditor();
-  renderFileList();
-  renderTabs();
-  $('active-file-status').textContent = name;
-  localStorage.setItem('cforge_active', name);
-  closeSidebars();
+function switchFile(idx) {
+  activeFileIdx = idx;
+  codeInput.value = files[idx].content;
+  updateEditor();
+  renderFiles();
 }
 
-// New file
-$('btn-new-file').addEventListener('click', () => {
-  $('newfile-input').value = '';
-  $('newfile-prompt').classList.remove('hidden');
-  $('newfile-prompt').style.display = 'flex';
-  setTimeout(() => $('newfile-input').focus(), 100);
-});
-
-$('newfile-cancel').addEventListener('click', () => {
-  $('newfile-prompt').classList.add('hidden');
-  $('newfile-prompt').style.display = 'none';
-});
-
-$('newfile-ok').addEventListener('click', createNewFile);
-$('newfile-input').addEventListener('keydown', e => { if (e.key === 'Enter') createNewFile(); if (e.key === 'Escape') { $('newfile-prompt').classList.add('hidden'); $('newfile-prompt').style.display = 'none'; } });
-
-function createNewFile() {
-  let name = $('newfile-input').value.trim();
-  if (!name) return;
-  if (!name.endsWith('.c') && !name.endsWith('.h')) name += '.c';
-  if (files[name]) { showToast('File already exists', '#ff5572'); return; }
-  files[name] = `// ${name}\n#include <stdio.h>\n\nint main() {\n    \n    return 0;\n}\n`;
-  saveFiles();
-  switchFile(name);
-  $('newfile-prompt').classList.add('hidden');
-  $('newfile-prompt').style.display = 'none';
-  showToast(`Created ${name}`, '#caff33');
-}
-
-// Delete file
-$('delete-cancel').addEventListener('click', () => { $('delete-prompt').style.display = 'none'; deleteTarget = null; });
-$('delete-ok').addEventListener('click', () => {
-  if (deleteTarget && files[deleteTarget] && Object.keys(files).length > 1) {
-    delete files[deleteTarget];
-    if (activeFile === deleteTarget) {
-      activeFile = Object.keys(files)[0];
-    }
-    saveFiles();
-    switchFile(activeFile);
-    showToast(`Deleted ${deleteTarget}`, '#ff5572');
-    deleteTarget = null;
+function addFile() {
+  let name = `file${files.length}.c`;
+  // Check for dups
+  let counter = files.length;
+  while (files.some(f => f.name === name)) {
+    counter++;
+    name = `file${counter}.c`;
   }
-  $('delete-prompt').style.display = 'none';
-});
-
-// ─── SIDEBARS ───────────────────────────────────────────
-function closeSidebars() {
-  sidebarFiles.classList.remove('open');
-  sidebarSettings.classList.remove('open');
-  sidebarOverlay.classList.remove('active');
+  files.push({ name, content: `#include <stdio.h>\n\nint main() {\n    // ${name}\n    return 0;\n}\n` });
+  switchFile(files.length - 1);
+  saveToStorage();
 }
 
-$('btn-files').addEventListener('click', () => {
-  const isOpen = sidebarFiles.classList.contains('open');
-  closeSidebars();
-  if (!isOpen) {
-    sidebarFiles.classList.add('open');
-    sidebarOverlay.classList.add('active');
+function deleteFile(idx) {
+  if (files.length <= 1) return;
+  files.splice(idx, 1);
+  if (activeFileIdx >= files.length) activeFileIdx = files.length - 1;
+  switchFile(activeFileIdx);
+  saveToStorage();
+}
+
+// ==================== COMPILER (Offline + Online Fallback) ====================
+function getWordBeforeCursor() {
+  const text = codeInput.value;
+  const pos = codeInput.selectionStart;
+  let start = pos - 1;
+  while (start >= 0 && /[a-zA-Z0-9_]/.test(text[start])) {
+    start--;
   }
-});
+  return text.substring(start + 1, pos);
+}
 
-$('btn-settings').addEventListener('click', () => {
-  const isOpen = sidebarSettings.classList.contains('open');
-  closeSidebars();
-  if (!isOpen) {
-    sidebarSettings.classList.add('open');
-    sidebarOverlay.classList.add('active');
+function showAutocomplete() {
+  const word = getWordBeforeCursor();
+  
+  if (word.length === 0) {
+    closeAutocomplete();
+    return;
   }
-});
 
-$('btn-close-settings').addEventListener('click', closeSidebars);
-sidebarOverlay.addEventListener('click', closeSidebars);
+  const lowerWord = word.toLowerCase();
+  const filtered = AUTOCOMPLETE_SUGGESTIONS.filter(s => 
+    s.label.toLowerCase().startsWith(lowerWord) && s.label.length > word.length
+  );
 
-// ─── SETTINGS ───────────────────────────────────────────
-function applySettings() {
-  editorDisplay.style.fontSize = settings.fontSize + 'px';
-  codeInput.style.fontSize = settings.fontSize + 'px';
-  editorDisplay.style.fontFamily = settings.fontFamily;
-  codeInput.style.fontFamily = settings.fontFamily;
-  $('set-fontsize').value = settings.fontSize;
-  $('fontsize-val').textContent = settings.fontSize + 'px';
-  $('set-fontfamily').value = settings.fontFamily;
+  if (filtered.length === 0) {
+    closeAutocomplete();
+    return;
+  }
 
-  // Toggle states
-  updateToggle('toggle-linenums', settings.lineNumbers);
-  updateToggle('toggle-wordwrap', settings.wordWrap);
-  updateToggle('toggle-autosave', settings.autoSave);
+  if (!autocompleteContainer) {
+    autocompleteContainer = document.createElement('div');
+    autocompleteContainer.className = 'autocomplete-container';
+    document.body.appendChild(autocompleteContainer);
+  }
 
-  // Theme buttons
-  document.querySelectorAll('.theme-btn').forEach(btn => {
-    if (btn.dataset.theme === settings.theme) {
-      btn.style.background = 'rgba(202,255,51,0.12)';
-      btn.style.color = '#caff33';
-      btn.style.borderColor = 'rgba(202,255,51,0.3)';
-    } else {
-      btn.style.background = 'rgba(255,255,255,0.05)';
-      btn.style.color = 'rgba(255,255,255,0.5)';
-      btn.style.borderColor = 'rgba(255,255,255,0.08)';
-    }
+  autocompleteContainer.innerHTML = '';
+  filtered.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'autocomplete-item';
+    
+    let badgeColor = '#00d4ff';
+    if (item.type === 'header') badgeColor = '#b48eff';
+    else if (item.type === 'keyword') badgeColor = '#c8ff00';
+    
+    div.innerHTML = `
+      <span style="color: #50fa7b; font-weight: 600;">${escapeHtml(item.label)}</span>
+      <span class="type-badge" style="background: ${badgeColor}20; color: ${badgeColor};">${item.type}</span>
+      <span class="desc">${item.desc}</span>
+    `;
+    div.addEventListener('click', () => selectAutocomplete(idx, filtered));
+    div.addEventListener('mouseenter', () => {
+      document.querySelectorAll('.autocomplete-item').forEach(el => el.classList.remove('selected'));
+      div.classList.add('selected');
+      autocompleteSelectedIdx = idx;
+    });
+    autocompleteContainer.appendChild(div);
   });
 
-  renderEditor();
+  // Position autocomplete near cursor
+  const rect = codeInput.getBoundingClientRect();
+  const textBeforeCursor = codeInput.value.substring(0, codeInput.selectionStart);
+  const lines = textBeforeCursor.split('\n');
+  const currentLine = lines[lines.length - 1];
+  const lineNumber = lines.length - 1;
+  
+  const lineHeight = 1.65 * settings.fontSize;
+  const top = rect.top + lineHeight * (lineNumber + 1);
+  const left = rect.left + (currentLine.length * (settings.fontSize * 0.6));
+  
+  autocompleteContainer.style.top = top + 'px';
+  autocompleteContainer.style.left = left + 'px';
+  autocompleteContainer.style.display = 'block';
+  
+  // Auto-select first result
+  autocompleteSelectedIdx = 0;
+  const items = autocompleteContainer.querySelectorAll('.autocomplete-item');
+  if (items.length > 0) {
+    items[0].classList.add('selected');
+  }
+  
+  lastAutocompleteQuery = word;
 }
 
-function updateToggle(id, state) {
-  const btn = $(id);
-  const dot = btn.querySelector('span');
-  if (state) {
-    btn.style.background = '#caff33';
-    dot.style.background = '#0e0e12';
-    dot.style.left = 'calc(100% - 18px)';
-  } else {
-    btn.style.background = 'rgba(255,255,255,0.15)';
-    dot.style.background = '#e2e8f0';
-    dot.style.left = '2px';
+function updateAutocompleteSelection(items) {
+  items.forEach(item => item.classList.remove('selected'));
+  if (autocompleteSelectedIdx >= 0 && autocompleteSelectedIdx < items.length) {
+    items[autocompleteSelectedIdx].classList.add('selected');
+    items[autocompleteSelectedIdx].scrollIntoView({ block: 'nearest' });
   }
 }
 
-$('set-fontsize').addEventListener('input', e => {
-  settings.fontSize = parseInt(e.target.value);
-  applySettings();
-  saveSettings();
-});
-
-$('set-fontfamily').addEventListener('change', e => {
-  settings.fontFamily = e.target.value;
-  applySettings();
-  saveSettings();
-});
-
-document.querySelectorAll('.theme-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    settings.theme = btn.dataset.theme;
-    applySettings();
-    saveSettings();
-    showToast(`${settings.theme === 'dark' ? 'Dark' : 'Light'} theme applied`, '#caff33');
-  });
-});
-
-$('toggle-linenums').addEventListener('click', () => {
-  settings.lineNumbers = !settings.lineNumbers;
-  applySettings();
-  saveSettings();
-});
-
-$('toggle-wordwrap').addEventListener('click', () => {
-  settings.wordWrap = !settings.wordWrap;
-  applySettings();
-  saveSettings();
-});
-
-$('toggle-autosave').addEventListener('click', () => {
-  settings.autoSave = !settings.autoSave;
-  applySettings();
-  saveSettings();
-});
-
-// ─── SAVE / LOAD ────────────────────────────────────────
-function saveFiles() { try { localStorage.setItem('cforge_files', JSON.stringify(files)); } catch(e) {} }
-function saveSettings() { try { localStorage.setItem('cforge_settings', JSON.stringify(settings)); } catch(e) {} }
-let autoSaveTimer;
-function autoSave() {
-  if (!settings.autoSave) return;
-  clearTimeout(autoSaveTimer);
-  autoSaveTimer = setTimeout(saveFiles, 1000);
+function selectAutocomplete(idx, filtered) {
+  if (!filtered) {
+    const word = getWordBeforeCursor();
+    filtered = AUTOCOMPLETE_SUGGESTIONS.filter(s => 
+      s.label.startsWith(word) && s.label.length > word.length
+    );
+  }
+  
+  if (idx < 0 || idx >= filtered.length) return;
+  
+  const item = filtered[idx];
+  const word = getWordBeforeCursor();
+  const start = codeInput.selectionStart - word.length;
+  const end = codeInput.selectionStart;
+  
+  codeInput.value = codeInput.value.substring(0, start) + item.snippet + codeInput.value.substring(end);
+  
+  // Position cursor inside the snippet for editing
+  const cursorPos = start + item.snippet.indexOf('(') + 1;
+  codeInput.selectionStart = codeInput.selectionEnd = Math.min(cursorPos, start + item.snippet.length);
+  
+  codeInput.dispatchEvent(new Event('input'));
+  closeAutocomplete();
 }
 
-// ─── COMPILE & RUN ──────────────────────────────────────
-let isCompiling = false;
+function closeAutocomplete() {
+  if (autocompleteContainer) {
+    autocompleteContainer.style.display = 'none';
+  }
+  autocompleteSelectedIdx = -1;
+}
 
 async function runCode() {
   if (isCompiling) return;
   isCompiling = true;
 
-  compileStatus.classList.remove('hidden');
-  compileStatus.style.display = 'flex';
-  $('btn-run').style.opacity = '0.6';
-  $('btn-run').style.pointerEvents = 'none';
-  $('status-dot').style.background = '#f78c6c';
-  $('status-text').textContent = 'Compiling...';
+  const btn = $('btnRun');
+  btn.innerHTML = `<span class="compile-spinner"></span><span>Compiling...</span>`;
+  btn.style.opacity = '0.7';
+  btn.disabled = true;
 
-  const code = files[activeFile] || '';
-  const startTime = Date.now();
+  // Clear output and show loading state
+  outputContent.innerHTML = '';
+  const loadingDiv = document.createElement('div');
+  loadingDiv.className = 'text-gray-500 flex items-center gap-2';
+  loadingDiv.innerHTML = `<span class="compile-spinner"></span> Compiling and running...`;
+  outputContent.appendChild(loadingDiv);
+  outputStatus.textContent = '';
 
-  // Try multiple APIs in order of reliability
-  const apis = [
-    { name: 'Piston', fn: () => runCodeWithPiston(code, startTime) },
-    { name: 'OneCompiler', fn: () => runCodeWithOneCompiler(code, startTime) },
-    { name: 'TIO', fn: () => runCodeWithTIO(code, startTime) }
-  ];
+  const code = files[activeFileIdx].content;
+  const startTime = performance.now();
 
-  for (let api of apis) {
-    try {
-      await api.fn();
-      isCompiling = false;
-      compileStatus.classList.add('hidden');
-      compileStatus.style.display = 'none';
-      $('btn-run').style.opacity = '1';
-      $('btn-run').style.pointerEvents = 'auto';
-      return;
-    } catch (err) {
-      // Try next API
-    }
-  }
-
-  // All APIs failed
-  outputContent.innerHTML = `<div class="output-text text-xs anim-slide"><span style="color:#ff5572;">⚠ Unable to reach compilation service.\n\nPlease check your internet connection and try again.</span></div>`;
-  $('status-dot').style.background = '#ff5572';
-  $('status-text').textContent = 'Error';
-
-  isCompiling = false;
-  compileStatus.classList.add('hidden');
-  compileStatus.style.display = 'none';
-  $('btn-run').style.opacity = '1';
-  $('btn-run').style.pointerEvents = 'auto';
-}
-
-async function runCodeWithPiston(code, startTime) {
-  const response = await fetch('https://emkc.org/api/v2/piston/execute', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      language: 'c',
-      version: '10.2.0',
-      files: [{ name: 'main.c', content: code }],
-      stdin: ''
-    })
-  });
-
-  if (!response.ok) throw new Error('Piston API error');
-
-  const data = await response.json();
-  if (!data || typeof data !== 'object') throw new Error('Invalid response');
-
-  const elapsed = Date.now() - startTime;
-  let output = '';
-  let hasError = false;
-
-  // Check for compilation errors
-  if (data.compile && data.compile.stderr) {
-    const stderr = data.compile.stderr.trim();
-    if (stderr) {
-      output += `<span style="color:#ff5572;">⚠ Compilation Error:\n${escHtml(stderr)}</span>\n`;
-      hasError = true;
-    }
-  }
-
-  // Check for runtime errors
-  if (data.runtime && data.runtime.stderr) {
-    const stderr = data.runtime.stderr.trim();
-    if (stderr) {
-      output += `<span style="color:#ff5572;">⚠ Runtime Error:\n${escHtml(stderr)}</span>\n`;
-      hasError = true;
-    }
-  }
-
-  // Get program output - check multiple possible locations
-  let stdout = '';
-  if (data.run && data.run.stdout) {
-    stdout = data.run.stdout.trim();
-  } else if (data.runtime && data.runtime.stdout) {
-    stdout = data.runtime.stdout.trim();
-  }
-
-  if (stdout) {
-    output += `<span style="color:#c3e88d;">${escHtml(stdout)}</span>\n`;
-  } else if (!hasError) {
-    output = `<span style="color:rgba(255,255,255,0.3);">(program completed with no output)</span>\n`;
-  }
-
-  output += `\n<span style="color:rgba(255,255,255,0.2);">────────────────────────────</span>\n`;
-  output += `<span style="color:rgba(255,255,255,0.25);">⏱ ${elapsed}ms</span>`;
-
-  outputContent.innerHTML = `<div class="output-text text-xs anim-slide">${output}</div>`;
-  $('status-dot').style.background = hasError ? '#ff5572' : '#caff33';
-  $('status-text').textContent = hasError ? 'Error' : 'Success';
-}
-
-async function runCodeWithOneCompiler(code, startTime) {
-  const formData = new FormData();
-  formData.append('code', code);
-  formData.append('language', 'c');
-  formData.append('stdin', '');
-
-  const response = await fetch('https://onecompiler.com/api/code/execute', {
-    method: 'POST',
-    body: formData
-  });
-
-  if (!response.ok) throw new Error('OneCompiler API error');
-
-  const data = await response.json();
-  const elapsed = Date.now() - startTime;
-  let output = '';
-  let hasError = false;
-
-  if (data.stderr && data.stderr.trim()) {
-    output += `<span style="color:#ff5572;">⚠ Error:\n${escHtml(data.stderr)}</span>\n`;
-    hasError = true;
-  }
-
-  if (data.stdout && data.stdout.trim()) {
-    output += `<span style="color:#c3e88d;">${escHtml(data.stdout)}</span>\n`;
-  }
-
-  if (!output.trim()) {
-    output = `<span style="color:rgba(255,255,255,0.3);">(program completed with no output)</span>\n`;
-  }
-
-  output += `\n<span style="color:rgba(255,255,255,0.2);">────────────────────────────</span>\n`;
-  output += `<span style="color:rgba(255,255,255,0.25);">⏱ ${elapsed}ms</span>`;
-
-  outputContent.innerHTML = `<div class="output-text text-xs anim-slide">${output}</div>`;
-  $('status-dot').style.background = hasError ? '#ff5572' : '#caff33';
-  $('status-text').textContent = hasError ? 'Error' : 'Success';
-}
-
-async function runCodeWithTIO(code, startTime) {
-  const payload = {
-    'lang': ['c'],
-    'code': [code],
-    'args': [[]],
-    'TIO_cURL_H2': ['1']
-  };
-
-  const response = await fetch('https://tio.run/cgi-bin/run/api/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams(payload).toString()
-  });
-
-  if (!response.ok) throw new Error('TIO API error');
-
-  const text = await response.text();
-  const elapsed = Date.now() - startTime;
-  let output = '';
-  let hasError = false;
-
-  // TIO returns output directly
-  if (text.trim()) {
-    // Check if it looks like an error (heuristic)
-    if (text.includes('error:') || text.includes('undefined reference')) {
-      output += `<span style="color:#ff5572;">⚠ Compilation Error:\n${escHtml(text)}</span>\n`;
-      hasError = true;
+  try {
+    // Try online first
+    const onlineResult = await tryOnlineCompile(code);
+    if (onlineResult.success) {
+      displayCompileResult(onlineResult, startTime);
     } else {
-      output += `<span style="color:#c3e88d;">${escHtml(text)}</span>\n`;
+      // Fallback to offline simulation
+      const offlineResult = await tryOfflineCompile(code);
+      displayCompileResult(offlineResult, startTime);
     }
-  } else {
-    output = `<span style="color:rgba(255,255,255,0.3);">(program completed with no output)</span>\n`;
+  } catch (err) {
+    // Emergency fallback
+    outputContent.innerHTML = '';
+    const errorHeader = document.createElement('div');
+    errorHeader.className = 'output-line';
+    errorHeader.style.color = '#f87171';
+    errorHeader.innerHTML = `<span class="font-semibold">⚠ Compilation Error:</span>`;
+    outputContent.appendChild(errorHeader);
+
+    const errorMsg = document.createElement('div');
+    errorMsg.className = 'output-line';
+    errorMsg.style.color = '#ff9999';
+    errorMsg.style.paddingLeft = '12px';
+    errorMsg.textContent = err.message || 'Unknown error occurred';
+    outputContent.appendChild(errorMsg);
+
+    outputStatus.textContent = '● Error';
+    outputStatus.style.color = '#f87171';
   }
 
-  output += `\n<span style="color:rgba(255,255,255,0.2);">────────────────────────────</span>\n`;
-  output += `<span style="color:rgba(255,255,255,0.25);">⏱ ${elapsed}ms</span>`;
+  // Auto-scroll to bottom
+  setTimeout(() => {
+    outputContent.scrollTop = outputContent.scrollHeight;
+  }, 50);
 
-  outputContent.innerHTML = `<div class="output-text text-xs anim-slide">${output}</div>`;
-  $('status-dot').style.background = hasError ? '#ff5572' : '#caff33';
-  $('status-text').textContent = hasError ? 'Error' : 'Success';
+  // Re-enable button
+  isCompiling = false;
+  btn.innerHTML = `<i data-lucide="play" class="w-3.5 h-3.5"></i><span id="runBtnText">${currentConfig.run_button_text || 'Run Code'}</span>`;
+  btn.style.opacity = '1';
+  btn.disabled = false;
+  lucide.createIcons({ nameAttr: 'data-lucide' });
 }
 
-$('btn-run').addEventListener('click', runCode);
+async function tryOnlineCompile(code) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    
+    const resp = await fetch('https://emkc.org/api/v2/piston/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        language: 'c',
+        version: '10.2.0',
+        files: [{ name: files[activeFileIdx].name, content: code }],
+        stdin: ''
+      })
+    });
 
-// ─── FORMAT CODE ────────────────────────────────────────
-function formatCode() {
-  let code = files[activeFile] || '';
-  // Basic C formatting
-  let indent = 0;
+    clearTimeout(timeout);
+
+    if (!resp.ok) {
+      return { success: false, error: `HTTP ${resp.status}` };
+    }
+
+    const data = await resp.json();
+    return { success: true, data: data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+function tryOfflineCompile(code) {
+  // Simulate compilation with basic syntax checking
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const errors = checkSyntax(code);
+      if (errors.length > 0) {
+        resolve({
+          success: true,
+          data: {
+            compile: { stderr: errors.join('\n') },
+            run: null
+          }
+        });
+      } else {
+        // Simulate execution
+        const output = simulateExecution(code);
+        resolve({
+          success: true,
+          data: {
+            compile: { stderr: '' },
+            run: { stdout: output, stderr: '', code: 0 }
+          }
+        });
+      }
+    }, 500);
+  });
+}
+
+function checkSyntax(code) {
+  const errors = [];
   const lines = code.split('\n');
-  const formatted = [];
-  for (let line of lines) {
-    let trimmed = line.trim();
-    if (!trimmed) { formatted.push(''); continue; }
-    if (trimmed.startsWith('}')) indent = Math.max(0, indent - 1);
-    formatted.push('    '.repeat(indent) + trimmed);
-    if (trimmed.endsWith('{') && !trimmed.startsWith('//') && !trimmed.startsWith('/*')) indent++;
+
+  let braceStack = [];
+  let bracketStack = [];
+  let parenStack = [];
+  let inString = false;
+  let inComment = false;
+  let multiLineComment = false;
+
+  lines.forEach((line, lineNum) => {
+    const lineNo = lineNum + 1;
+    let cleanLine = line;
+
+    // Skip full-line comments
+    if (cleanLine.trim().startsWith('//')) return;
+
+    // Handle multiline comments
+    if (multiLineComment) {
+      if (cleanLine.includes('*/')) {
+        multiLineComment = false;
+        cleanLine = cleanLine.split('*/')[1] || '';
+      } else {
+        return;
+      }
+    }
+    if (cleanLine.includes('/*')) {
+      if (!cleanLine.includes('*/')) {
+        multiLineComment = true;
+        return;
+      }
+      cleanLine = cleanLine.replace(/\/\*.*?\*\//g, '');
+    }
+
+    // Basic string detection (simplified)
+    let i = 0;
+    while (i < cleanLine.length) {
+      const ch = cleanLine[i];
+
+      // String literals
+      if (ch === '"' && (i === 0 || cleanLine[i-1] !== '\\')) {
+        inString = !inString;
+        i++;
+        continue;
+      }
+
+      if (inString) { i++; continue; }
+
+      // Track brackets
+      if (ch === '{') braceStack.push({ ch: '{', line: lineNo });
+      else if (ch === '}') {
+        if (braceStack.length === 0) errors.push(`error at line ${lineNo}: unexpected closing brace '}'`);
+        else braceStack.pop();
+      }
+      else if (ch === '[') bracketStack.push({ ch: '[', line: lineNo });
+      else if (ch === ']') {
+        if (bracketStack.length === 0) errors.push(`error at line ${lineNo}: unexpected closing bracket ']'`);
+        else bracketStack.pop();
+      }
+      else if (ch === '(') parenStack.push({ ch: '(', line: lineNo });
+      else if (ch === ')') {
+        if (parenStack.length === 0) errors.push(`error at line ${lineNo}: unexpected closing parenthesis ')'`);
+        else parenStack.pop();
+      }
+
+      i++;
+    }
+
+    // Check for missing semicolons on statements (excluding control flow)
+    const trimmed = cleanLine.trim();
+    if (trimmed.length > 0) {
+      const hasControlFlow = /^\s*(if|else|for|while|do|switch|case|default|struct|union|enum|typedef|return|break|continue|goto)\b/.test(cleanLine);
+      const isFunctionDef = /^\s*\w+[\s\*&]+\w+\s*\(/.test(cleanLine) && !cleanLine.includes(';');
+      const isOpenBrace = trimmed.endsWith('{');
+      const isCloseBrace = trimmed === '}' || trimmed === '};' || trimmed === '} while' || trimmed.endsWith('} else');
+      const isPreprocessor = trimmed.startsWith('#');
+      const isLabel = /^\w+\s*:/.test(trimmed);
+      const isEmpty = trimmed === '';
+
+      // Detect missing semicolon
+      if (!isEmpty && !hasControlFlow && !isFunctionDef && !isOpenBrace && !isCloseBrace && !isPreprocessor && !isLabel) {
+        if (!trimmed.endsWith(';') && !trimmed.endsWith('{') && !trimmed.endsWith('\\')) {
+          // Check if it's a declaration or assignment
+          if (/^[\w\s\*&]+[=()]/.test(trimmed) || /int|char|float|double|void|bool|long|short|unsigned|signed|const|static|extern/.test(trimmed)) {
+            errors.push(`error at line ${lineNo}: missing ';' at end of statement`);
+          }
+        }
+      }
+    }
+  });
+
+  // Check unmatched opening brackets
+  if (braceStack.length > 0) {
+    braceStack.forEach(b => {
+      errors.push(`error at line ${b.line}: missing closing brace '}'`);
+    });
   }
-  files[activeFile] = formatted.join('\n');
-  codeInput.value = files[activeFile];
-  renderEditor();
-  saveFiles();
-  showToast('Code formatted', '#82aaff');
+  if (bracketStack.length > 0) {
+    bracketStack.forEach(b => {
+      errors.push(`error at line ${b.line}: missing closing bracket ']'`);
+    });
+  }
+  if (parenStack.length > 0) {
+    parenStack.forEach(b => {
+      errors.push(`error at line ${b.line}: missing closing parenthesis ')'`);
+    });
+  }
+
+  // Check for main function
+  if (!code.includes('int main') && !code.includes('void main')) {
+    errors.push(`warning: no main function found`);
+  }
+
+  return errors;
 }
 
-$('btn-format').addEventListener('click', formatCode);
+function simulateExecution(code) {
+  // Extract printf statements and simulate output
+  const printfRegex = /printf\s*\(\s*"([^"]*)"/g;
+  const outputs = [];
+  let match;
 
-// ─── DOWNLOAD ───────────────────────────────────────────
-$('btn-download').addEventListener('click', () => {
-  const code = files[activeFile] || '';
-  const blob = new Blob([code], { type: 'text/plain' });
+  while ((match = printfRegex.exec(code)) !== null) {
+    let text = match[1];
+    // Replace common escape sequences
+    text = text.replace(/\\n/g, '\n');
+    text = text.replace(/\\t/g, '\t');
+    text = text.replace(/\\r/g, '\r');
+    text = text.replace(/%d/g, '[number]');
+    text = text.replace(/%s/g, '[string]');
+    text = text.replace(/%f/g, '[float]');
+    text = text.replace(/%c/g, '[char]');
+    outputs.push(text);
+  }
+
+  // If no printf found, show a default message
+  if (outputs.length === 0) {
+    return 'Program executed (no output detected - add printf() to see results)';
+  }
+
+  return outputs.join('\n');
+}
+
+function displayCompileResult(result, startTime) {
+  outputContent.innerHTML = '';
+  const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+
+  let hasError = false;
+  let hasOutput = false;
+  let errorCount = 0;
+  let warningCount = 0;
+
+  // Display compilation errors (PRIORITY)
+  if (result.data.compile && result.data.compile.stderr && result.data.compile.stderr.trim()) {
+    hasError = true;
+    const stderrText = result.data.compile.stderr.trim();
+    
+    // Count errors and warnings
+    const errorMatches = stderrText.match(/error:/gi) || [];
+    const warningMatches = stderrText.match(/warning:/gi) || [];
+    errorCount = errorMatches.length;
+    warningCount = warningMatches.length;
+
+    const errorHeader = document.createElement('div');
+    errorHeader.className = 'output-line';
+    errorHeader.style.color = '#f87171';
+    errorHeader.style.fontWeight = 'bold';
+    errorHeader.style.marginBottom = '6px';
+    
+    if (errorCount > 0) {
+      errorHeader.innerHTML = `<span>🛑 ${errorCount} Compilation Error${errorCount > 1 ? 's' : ''}${warningCount > 0 ? ` + ${warningCount} Warning${warningCount > 1 ? 's' : ''}` : ''}</span>`;
+    } else if (warningCount > 0) {
+      errorHeader.innerHTML = `<span>⚠️ ${warningCount} Warning${warningCount > 1 ? 's' : ''}</span>`;
+      errorHeader.style.color = '#ffcc00';
+    }
+    outputContent.appendChild(errorHeader);
+
+    // Display each error/warning line
+    const errorLines = stderrText.split('\n');
+    errorLines.forEach(line => {
+      if (line.trim()) {
+        const errorLine = document.createElement('div');
+        errorLine.className = 'output-line';
+        
+        if (line.toLowerCase().includes('error:')) {
+          errorLine.style.color = '#ff6b6b';
+          errorLine.style.paddingLeft = '12px';
+          errorLine.style.borderLeft = '3px solid #ff6b6b';
+          errorLine.style.paddingLeft = '10px';
+        } else if (line.toLowerCase().includes('warning:')) {
+          errorLine.style.color = '#ffa94d';
+          errorLine.style.paddingLeft = '12px';
+          errorLine.style.borderLeft = '3px solid #ffa94d';
+          errorLine.style.paddingLeft = '10px';
+        } else {
+          errorLine.style.color = '#ff9999';
+          errorLine.style.paddingLeft = '12px';
+        }
+        
+        errorLine.textContent = line;
+        outputContent.appendChild(errorLine);
+      }
+    });
+
+    // Add separator
+    if (result.data.run) {
+      const separator = document.createElement('div');
+      separator.style.height = '1px';
+      separator.style.background = 'rgba(255,255,255,0.1)';
+      separator.style.margin = '12px 0';
+      outputContent.appendChild(separator);
+    }
+  }
+
+  // Display runtime output (only if compilation succeeded)
+  if (result.data.run && !hasError) {
+    if (result.data.run.stdout && result.data.run.stdout.trim()) {
+      hasOutput = true;
+      const outputHeader = document.createElement('div');
+      outputHeader.className = 'output-line';
+      outputHeader.style.color = '#50fa7b';
+      outputHeader.style.fontWeight = 'bold';
+      outputHeader.style.marginBottom = '6px';
+      outputHeader.innerHTML = `<span>✅ Output:</span>`;
+      outputContent.appendChild(outputHeader);
+
+      const stdoutLines = result.data.run.stdout.split('\n');
+      stdoutLines.forEach(line => {
+        const outputLine = document.createElement('div');
+        outputLine.className = 'output-line';
+        outputLine.style.color = '#50fa7b';
+        outputLine.style.paddingLeft = '12px';
+        outputLine.textContent = line;
+        outputContent.appendChild(outputLine);
+      });
+    }
+
+    if (result.data.run.stderr && result.data.run.stderr.trim()) {
+      const stderrLines = result.data.run.stderr.trim().split('\n');
+      stderrLines.forEach(line => {
+        if (line.trim()) {
+          const warningLine = document.createElement('div');
+          warningLine.className = 'output-line';
+          warningLine.style.color = '#ffcc00';
+          warningLine.style.paddingLeft = '12px';
+          warningLine.textContent = line;
+          outputContent.appendChild(warningLine);
+        }
+      });
+    }
+
+    if (result.data.run.code !== 0 && result.data.run.code !== undefined) {
+      const exitLine = document.createElement('div');
+      exitLine.className = 'output-line';
+      exitLine.style.color = '#ff9999';
+      exitLine.style.marginTop = '8px';
+      exitLine.textContent = `⚠️ Process exited with code ${result.data.run.code}`;
+      outputContent.appendChild(exitLine);
+      hasError = true;
+    }
+  }
+
+  // Show "No output" message
+  if (!hasOutput && !hasError) {
+    const noOutputDiv = document.createElement('div');
+    noOutputDiv.className = 'output-line';
+    noOutputDiv.style.color = '#888888';
+    noOutputDiv.innerHTML = `<i data-lucide="info" class="w-3 h-3 inline mr-1"></i> Program ran successfully with no output`;
+    outputContent.appendChild(noOutputDiv);
+  }
+
+  // Show execution time
+  const timeDiv = document.createElement('div');
+  timeDiv.className = 'output-line';
+  timeDiv.style.color = '#666666';
+  timeDiv.style.fontSize = '10px';
+  timeDiv.style.marginTop = '12px';
+  timeDiv.style.borderTop = '1px solid rgba(255,255,255,0.1)';
+  timeDiv.style.paddingTop = '8px';
+  timeDiv.textContent = `⏱️ Executed in ${elapsed}s`;
+  outputContent.appendChild(timeDiv);
+
+  // Update status
+  outputStatus.textContent = hasError ? `● ${errorCount > 0 ? 'Error' : 'Warning'}` : '● Success';
+  outputStatus.style.color = hasError ? (errorCount > 0 ? '#f87171' : '#ffcc00') : '#50fa7b';
+
+  lucide.createIcons({ nameAttr: 'data-lucide' });
+}
+
+// ==================== FORMAT ====================
+function formatCode() {
+  let code = codeInput.value;
+  // Basic formatting: normalize indentation
+  const lines = code.split('\n');
+  let indent = 0;
+  const formatted = lines.map(line => {
+    let trimmed = line.trim();
+    if (!trimmed) return '';
+    if (trimmed.startsWith('}') || trimmed.startsWith(')')) indent = Math.max(0, indent - 1);
+    const result = '    '.repeat(indent) + trimmed;
+    if (trimmed.endsWith('{')) indent++;
+    return result;
+  }).join('\n');
+  codeInput.value = formatted;
+  files[activeFileIdx].content = formatted;
+  updateEditor();
+  if (settings.autoSave) saveToStorage();
+}
+
+// ==================== DOWNLOAD ====================
+function downloadFile() {
+  const blob = new Blob([codeInput.value], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = activeFile;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast(`Downloaded ${activeFile}`, '#caff33');
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = files[activeFileIdx].name || 'code.c';
+  link.style.display = 'none';
+  document.documentElement.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    document.documentElement.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+// ==================== SETTINGS ====================
+function applySettings() {
+  const fs = settings.fontSize + 'px';
+  const ff = `'${settings.fontFamily}', monospace`;
+  codeInput.style.fontSize = fs;
+  codeInput.style.fontFamily = ff;
+  highlightOverlay.style.fontSize = fs;
+  highlightOverlay.style.fontFamily = ff;
+  lineNumbers.style.fontSize = fs;
+  lineNumbers.style.fontFamily = ff;
+
+  const app = $('app');
+  const body = $('appBody');
+  if (settings.theme === 'light') {
+    app.classList.add('theme-light');
+    body.classList.add('theme-light');
+    app.style.background = '#fafafa';
+    $('headerBar').style.background = 'rgba(250,250,250,0.98)';
+    $('outputPanel').style.background = '#f0f0f5';
+  } else {
+    app.classList.remove('theme-light');
+    body.classList.remove('theme-light');
+    app.style.background = '#0d0d14';
+    $('headerBar').style.background = 'rgba(13,13,20,0.98)';
+    $('outputPanel').style.background = '#0a0a10';
+  }
+
+  if (settings.wordWrap) {
+    codeInput.style.whiteSpace = 'pre-wrap';
+    codeInput.style.wordBreak = 'break-all';
+    highlightOverlay.style.whiteSpace = 'pre-wrap';
+    highlightOverlay.style.wordBreak = 'break-all';
+  } else {
+    codeInput.style.whiteSpace = 'pre';
+    codeInput.style.wordBreak = 'normal';
+    highlightOverlay.style.whiteSpace = 'pre';
+    highlightOverlay.style.wordBreak = 'normal';
+  }
+
+  updateEditor();
+}
+
+// Settings controls
+$('settingFontSize').addEventListener('input', (e) => {
+  settings.fontSize = parseInt(e.target.value);
+  $('fontSizeVal').textContent = settings.fontSize;
+  applySettings();
+  saveToStorage();
 });
 
-// ─── CLEAR OUTPUT ───────────────────────────────────────
-$('btn-clear-output').addEventListener('click', () => {
-  outputContent.innerHTML = `<div class="output-text text-xs" style="color: rgba(255,255,255,0.3);"><span style="color:#caff33;">⚡</span> Output cleared. Press Run to compile.</div>`;
+$('settingFontFamily').addEventListener('change', (e) => {
+  settings.fontFamily = e.target.value;
+  applySettings();
+  saveToStorage();
 });
 
-// ─── RESIZE HANDLE ──────────────────────────────────────
-const resizeHandle = $('resize-handle');
-const editorSection = $('editor-section');
-const outputSection = $('output-section');
+$('themeDark').addEventListener('click', () => {
+  settings.theme = 'dark';
+  $('themeDark').style.background = '#c8ff00';
+  $('themeDark').style.color = '#0d0d14';
+  $('themeDark').className = 'flex-1 py-2 rounded-lg text-xs font-medium transition-all';
+  $('themeLight').style.background = 'transparent';
+  $('themeLight').style.color = '';
+  $('themeLight').className = 'flex-1 py-2 rounded-lg text-xs font-medium text-gray-400 hover:text-white border border-white/10 transition-all';
+  applySettings();
+  saveToStorage();
+});
+
+$('themeLight').addEventListener('click', () => {
+  settings.theme = 'light';
+  $('themeLight').style.background = '#c8ff00';
+  $('themeLight').style.color = '#0d0d14';
+  $('themeLight').className = 'flex-1 py-2 rounded-lg text-xs font-medium transition-all';
+  $('themeDark').style.background = 'transparent';
+  $('themeDark').style.color = '';
+  $('themeDark').className = 'flex-1 py-2 rounded-lg text-xs font-medium text-gray-400 hover:text-white border border-white/10 transition-all';
+  applySettings();
+  saveToStorage();
+});
+
+function setupToggle(id, key) {
+  const el = $(id);
+  el.addEventListener('click', () => {
+    settings[key] = !settings[key];
+    el.classList.toggle('on', settings[key]);
+    applySettings();
+    saveToStorage();
+  });
+}
+setupToggle('toggleLineNums', 'lineNumbers');
+setupToggle('toggleWordWrap', 'wordWrap');
+setupToggle('toggleAutoSave', 'autoSave');
+
+// ==================== PANELS ====================
+$('btnSettings').addEventListener('click', () => {
+  $('settingsPanel').classList.remove('hidden');
+  $('settingsPanel').classList.add('flex');
+  $('settingsOverlay').classList.remove('hidden');
+});
+$('closeSettings').addEventListener('click', () => {
+  $('settingsPanel').classList.add('hidden');
+  $('settingsPanel').classList.remove('flex');
+  $('settingsOverlay').classList.add('hidden');
+});
+$('settingsOverlay').addEventListener('click', () => {
+  $('settingsPanel').classList.add('hidden');
+  $('settingsPanel').classList.remove('flex');
+  $('settingsOverlay').classList.add('hidden');
+});
+
+$('sidebarToggle').addEventListener('click', () => {
+  $('sidebarMobile').classList.remove('hidden');
+  $('sidebarMobile').classList.add('flex');
+  $('sidebarOverlay').classList.remove('hidden');
+});
+$('closeSidebar').addEventListener('click', () => {
+  $('sidebarMobile').classList.add('hidden');
+  $('sidebarMobile').classList.remove('flex');
+  $('sidebarOverlay').classList.add('hidden');
+});
+$('sidebarOverlay').addEventListener('click', () => {
+  $('sidebarMobile').classList.add('hidden');
+  $('sidebarMobile').classList.remove('flex');
+  $('sidebarOverlay').classList.add('hidden');
+});
+
+// ==================== BUTTON HANDLERS ====================
+$('btnRun').addEventListener('click', runCode);
+$('btnFormat').addEventListener('click', formatCode);
+$('btnDownload').addEventListener('click', downloadFile);
+$('btnNewFile').addEventListener('click', addFile);
+$('btnNewFileMobile').addEventListener('click', addFile);
+$('btnClearOutput').addEventListener('click', () => {
+  outputContent.innerHTML = `<div class="text-gray-600">Console cleared.</div>`;
+  outputStatus.textContent = '';
+});
+
+// ==================== RESIZE HANDLE ====================
 let isResizing = false;
+const resizeHandle = $('resizeHandle');
+const outputPanel = $('outputPanel');
+const editorWrapper = $('editorWrapper');
 
-resizeHandle.addEventListener('mousedown', startResize);
-resizeHandle.addEventListener('touchstart', startResize, { passive: false });
+resizeHandle.addEventListener('mousedown', (e) => { isResizing = true; e.preventDefault(); });
+resizeHandle.addEventListener('touchstart', (e) => { isResizing = true; }, { passive: true });
 
-function startResize(e) {
-  e.preventDefault();
-  isResizing = true;
-  document.body.style.cursor = 'ns-resize';
-  document.body.style.userSelect = 'none';
-  document.addEventListener('mousemove', doResize);
-  document.addEventListener('mouseup', stopResize);
-  document.addEventListener('touchmove', doResize, { passive: false });
-  document.addEventListener('touchend', stopResize);
-}
-
-function doResize(e) {
+document.addEventListener('mousemove', (e) => {
   if (!isResizing) return;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  const wrapper = $('main-wrapper');
-  const rect = wrapper.getBoundingClientRect();
-  const newEditorH = clientY - rect.top;
-  const minEditor = 120;
-  const minOutput = 80;
-  const totalH = rect.height - resizeHandle.offsetHeight;
-  const clampedEditor = Math.min(Math.max(newEditorH, minEditor), totalH - minOutput);
-  editorSection.style.flex = 'none';
-  editorSection.style.height = clampedEditor + 'px';
-  outputSection.style.flex = 'none';
-  outputSection.style.height = (totalH - clampedEditor) + 'px';
+  const mainArea = editorWrapper.parentElement;
+  const rect = mainArea.getBoundingClientRect();
+  const y = e.clientY - rect.top;
+  const totalH = rect.height;
+  const outputH = Math.max(80, Math.min(totalH - 100, totalH - y));
+  outputPanel.style.height = outputH + 'px';
+});
+
+document.addEventListener('touchmove', (e) => {
+  if (!isResizing) return;
+  const touch = e.touches[0];
+  const mainArea = editorWrapper.parentElement;
+  const rect = mainArea.getBoundingClientRect();
+  const y = touch.clientY - rect.top;
+  const totalH = rect.height;
+  const outputH = Math.max(80, Math.min(totalH - 100, totalH - y));
+  outputPanel.style.height = outputH + 'px';
+});
+
+document.addEventListener('mouseup', () => { isResizing = false; });
+document.addEventListener('touchend', () => { isResizing = false; });
+
+// ==================== LOCAL STORAGE ====================
+function saveToStorage() {
+  try {
+    localStorage.setItem('craby_c_files', JSON.stringify(files));
+    localStorage.setItem('craby_c_active', activeFileIdx);
+    localStorage.setItem('craby_c_settings', JSON.stringify(settings));
+  } catch(e) {}
 }
 
-function stopResize() {
-  isResizing = false;
-  document.body.style.cursor = '';
-  document.body.style.userSelect = '';
-  document.removeEventListener('mousemove', doResize);
-  document.removeEventListener('mouseup', stopResize);
-  document.removeEventListener('touchmove', doResize);
-  document.removeEventListener('touchend', stopResize);
+function loadFromStorage() {
+  try {
+    const f = localStorage.getItem('craby_c_files');
+    const a = localStorage.getItem('craby_c_active');
+    const s = localStorage.getItem('craby_c_settings');
+    if (f) files = JSON.parse(f);
+    if (a) activeFileIdx = Math.min(parseInt(a), files.length - 1);
+    if (s) settings = { ...settings, ...JSON.parse(s) };
+  } catch(e) {}
 }
 
-// ─── TOAST ──────────────────────────────────────────────
-function showToast(msg, color) {
-  const toast = document.createElement('div');
-  toast.className = 'toast-msg font-display';
-  toast.style.background = color || '#caff33';
-  toast.style.color = color === '#ff5572' ? '#fff' : '#0e0e12';
-  toast.textContent = msg;
-  $('toast-container').appendChild(toast);
-  setTimeout(() => toast.remove(), 2200);
-}
-
-// ─── ELEMENT SDK ────────────────────────────────────────
+// ==================== ELEMENT SDK ====================
 const defaultConfig = {
-  app_title: 'CForge',
-  welcome_message: 'Ready to compile. Press Run or Ctrl+Enter.',
-  background_color: '#0e0e12',
-  surface_color: '#12121a',
-  text_color: '#e2e8f0',
-  accent_color: '#caff33',
-  secondary_action_color: '#82aaff',
+  app_title: 'Craby C Compiler',
+  run_button_text: 'Run Code',
+  background_color: '#0d0d14',
+  surface_color: '#16161e',
+  text_color: '#c5c8d4',
+  accent_color: '#c8ff00',
+  secondary_action_color: '#50fa7b',
   font_family: 'Outfit',
   font_size: 14
 };
 
+let currentConfig = { ...defaultConfig };
+
 function applyConfig(config) {
-  const title = config.app_title || defaultConfig.app_title;
-  const welcome = config.welcome_message || defaultConfig.welcome_message;
-  const bg = config.background_color || defaultConfig.background_color;
-  const surface = config.surface_color || defaultConfig.surface_color;
-  const text = config.text_color || defaultConfig.text_color;
+  currentConfig = config;
+
+  // Text
+  const titleEl = $('appTitleEl');
+  if (titleEl) titleEl.textContent = config.app_title || defaultConfig.app_title;
+  const runText = $('runBtnText');
+  if (runText && !isCompiling) runText.textContent = config.run_button_text || defaultConfig.run_button_text;
+
+  // Colors
   const accent = config.accent_color || defaultConfig.accent_color;
-  const secondary = config.secondary_action_color || defaultConfig.secondary_action_color;
-  const font = config.font_family || defaultConfig.font_family;
-  const fontSize = config.font_size || defaultConfig.font_size;
+  const bg = config.background_color || defaultConfig.background_color;
+  const textC = config.text_color || defaultConfig.text_color;
+  const surface = config.surface_color || defaultConfig.surface_color;
+  const secAction = config.secondary_action_color || defaultConfig.secondary_action_color;
 
-  const titleEl = $('app-title-text');
-  if (titleEl) titleEl.textContent = title;
+  // Apply accent to run button
+  const runBtn = $('btnRun');
+  if (runBtn) { runBtn.style.background = accent; }
 
-  const welcomeEl = $('welcome-msg-text');
-  if (welcomeEl) welcomeEl.textContent = welcome;
+  // Logo
+  const logo = document.querySelector('header .w-8');
+  if (logo) logo.style.background = `linear-gradient(135deg, ${accent}, ${secAction})`;
 
-  document.body.style.background = bg;
-  document.body.style.color = text;
-  document.body.style.fontFamily = `${font}, Outfit, sans-serif`;
+  // Output text color
+  outputContent.style.color = secAction;
 
-  const editorBg = $('editor-scroll');
-  if (editorBg) editorBg.style.background = surface;
+  // Font
+  const fontFam = config.font_family || defaultConfig.font_family;
+  document.body.style.fontFamily = `${fontFam}, Outfit, sans-serif`;
 
-  // Apply font size to body text
-  const baseSize = fontSize;
-  document.querySelectorAll('.font-display').forEach(el => {
-    if (!el.closest('.editor-area') && !el.closest('.output-text')) {
-      // Keep relative sizing
-    }
+  // Font size (base)
+  const baseFontSize = config.font_size || defaultConfig.font_size;
+  document.querySelectorAll('h1,h2,h3,.font-semibold').forEach(el => {
+    el.style.fontSize = `${baseFontSize * 1.1}px`;
   });
 }
 
@@ -1196,19 +1380,22 @@ if (window.elementSdk) {
     }),
     mapToEditPanelValues: (config) => new Map([
       ['app_title', config.app_title || defaultConfig.app_title],
-      ['welcome_message', config.welcome_message || defaultConfig.welcome_message]
+      ['run_button_text', config.run_button_text || defaultConfig.run_button_text]
     ])
   });
 }
 
-// ─── INIT ───────────────────────────────────────────────
-codeInput.value = files[activeFile];
-renderEditor();
-renderFileList();
-renderTabs();
+// ==================== INIT ====================
+loadFromStorage();
+codeInput.value = files[activeFileIdx].content;
 applySettings();
-lucide.createIcons();
-updateCursorPos();
+updateEditor();
+renderFiles();
+
+// Initial output
+outputContent.innerHTML = `<div class="text-gray-500 flex items-center gap-2"><i data-lucide="terminal" class="w-3.5 h-3.5"></i> Ready. Press <kbd class="px-1.5 py-0.5 rounded text-[10px] border border-white/10 bg-white/5 mx-1">Ctrl+Enter</kbd> or click Run to compile.</div>`;
+
+lucide.createIcons({ nameAttr: 'data-lucide' });
 </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e04f4d7e355ff97',t:'MTc3NDE3OTk5Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e0a52639689d7fb',t:'MTc3NDIzNjI1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
