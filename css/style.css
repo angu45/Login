@@ -1,0 +1,310 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* --- Root Variables (Refined Color Palette) --- */
+:root {
+    --primary-color: #6366f1;    /* Modern Indigo */
+    --secondary-color: #10b981;  /* Emerald Green */
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --text-color: #1e293b;
+    --light-text: #64748b;
+    --header-bg: rgba(255, 255, 255, 0.9);
+    --footer-bg: #0f172a;
+    --border-color: #e2e8f0;
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --code-bg: #1e1e1e;
+}
+
+/* --- Dark Mode Support --- */
+body.dark-theme {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --text-color: #f1f5f9;
+    --light-text: #94a3b8;
+    --header-bg: rgba(30, 41, 59, 0.9);
+    --border-color: #334155;
+    --code-bg: #000000;
+}
+
+/* --- Reset & Global --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.7;
+    transition: all 0.3s ease;
+}
+
+/* --- Layout Structure --- */
+.container {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* --- Header & Navigation --- */
+.header {
+    background: var(--header-bg);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    width: 100%;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-img {
+    height: 35px;
+    display: block;
+}
+
+.nav {
+    display: flex;
+    gap: 25px;
+}
+
+.nav a {
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+}
+
+.nav a:hover {
+    color: var(--primary-color);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-actions button {
+    background: var(--border-color);
+    border: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+}
+
+/* --- Main Content Area --- */
+.main-content {
+    min-height: 80vh; /* Khaalcha footer khali rahav mahanun */
+    padding: 50px 0;
+    width: 100%;
+    max-width: 1100px; /* Container sarkhi width */
+    margin: 0 auto;
+}
+
+h1 {
+    font-size: clamp(1.8rem, 5vw, 2.5rem); /* Responsive font */
+    color: var(--text-color);
+    text-align: center;
+    margin-bottom: 40px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+h2 {
+    font-size: 1.6rem;
+    color: var(--primary-color);
+    margin: 35px 0 15px;
+}
+
+h3 {
+    font-size: 1.25rem;
+    margin: 25px 0 10px;
+}
+
+p {
+    margin-bottom: 20px;
+    color: var(--light-text);
+}
+
+/* --- Java Code Block & Elements --- */
+pre {
+    background: var(--code-bg);
+    color: #e2e8f0;
+    padding: 20px;
+    border-radius: 12px;
+    overflow-x: auto;
+    font-family: 'Consolas', monospace;
+    font-size: 0.9rem;
+    margin: 25px 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color);
+}
+
+code {
+    font-family: monospace;
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary-color);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* --- Tables --- */
+.table-wrapper {
+    overflow-x: auto; /* Mobile sathi table scroll */
+    margin: 30px 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+th {
+    background-color: var(--primary-color);
+    color: white;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+}
+
+/* --- Lists --- */
+ul, ol {
+    margin: 20px 0 20px 25px;
+}
+
+li {
+    margin-bottom: 10px;
+    padding-left: 5px;
+}
+
+/* --- Footer Styling (Center Aligned & Stacked) --- */
+.footer {
+    background: var(--footer-bg);
+    color: #f8fafc;
+    padding: 50px 0 30px;
+    margin-top: 80px;
+    width: 100%;
+}
+
+.footer-top {
+    /* Grid ऐवजी Flex वापरून सगळं सेंटरला घेतलं आहे */
+    display: flex;
+    flex-direction: column; 
+    align-items: center;    /* आडव्या बाजूने सेंटर */
+    text-align: center;     /* मजकूर सेंटर */
+    gap: 40px;              /* प्रत्येक कॉलममध्ये अंतर */
+    margin-bottom: 40px;
+}
+
+.footer-col {
+    width: 100%;
+    max-width: 400px;       /* मजकूर जास्त पसरू नये म्हणून */
+}
+
+.footer-col h3, 
+.footer-col h4 {
+    color: #fff;
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+/* हेडलाईनच्या खाली छोटी बॉर्डर (Design साठी) */
+.footer-col h3::after,
+.footer-col h4::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 2px;
+    background: var(--primary-color);
+}
+
+.footer-col a {
+    color: #94a3b8;
+    text-decoration: none;
+    display: block;         /* एका खाली एक दिसण्यासाठी */
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+}
+
+.footer-col a:hover {
+    color: var(--primary-color);
+    transform: translateY(-2px); /* थोडा वर सरकेल */
+}
+
+.footer-bottom {
+    text-align: center;
+    border-top: 1px solid #1e293b;
+    padding-top: 30px;
+    color: #64748b;
+    display: flex;
+    flex-direction: column; /* कॉपीराइट मजकूर सुद्धा एका खाली एक */
+    gap: 10px;
+}
+
+.footer-bottom small {
+    word-break: break-all;  /* मोठी लिंक असेल तर कट होऊन खाली येईल */
+    opacity: 0.7;
+}
+
+/* Mobile साठी सुटसुटीत पॅडिंग */
+@media (max-width: 768px) {
+    .footer {
+        padding: 40px 20px;
+    }
+}
+/* --- Responsive Menu (Mobile) --- */
+@media (max-width: 768px) {
+    #menu-btn { display: flex; }
+
+    .nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: var(--card-bg);
+        flex-direction: column;
+        padding: 30px;
+        gap: 20px;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        border-bottom: 2px solid var(--primary-color);
+    }
+
+    .nav.active { display: flex; }
+
+    .main-content {
+        padding: 30px 15px;
+    }
+}
